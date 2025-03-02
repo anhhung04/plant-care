@@ -1,0 +1,23 @@
+services:
+  api-gateway:
+    build: ./api-gateway
+    ports:
+      - "3080:80"
+  mqtt-server:
+    build: ./mqtt-server
+    ports:
+      - "1884:1884"
+    restart: unless-stopped
+    networks:
+      - iot
+  iot-db:
+    build: ./iot-db
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    networks:
+      - iot
+
+networks:
+  iot:
+    driver: bridge

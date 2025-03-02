@@ -1,0 +1,13 @@
+[project]
+name = "iot-service"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.11",
+    "markupsafe>=3.0.2",
+    "mongo>=0.2.0",
+    "paho-mqtt>=2.1.0",
+    "uvicorn>=0.34.0",
+]
