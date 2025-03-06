@@ -2,3 +2,13 @@ server:
   port: 8080
   servlet:
     context-path: /mobileBE
+spring:
+  datasource:
+    url: DATA URL HERE
+    driverClassName: "com.mysql.cj.jdbc.Driver"
+    username: USERNAME
+    password: PASSWORD
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
