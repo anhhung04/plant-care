@@ -3,12 +3,18 @@ server:
   servlet:
     context-path: /mobileBE
 spring:
+  data:
+    mongodb:
+      username: hothanhnha25062004
+      password: hF09yiWZJHw5j4nx
+      database: mongodb
+      uri: mongodb+srv://hothanhnha25062004:hF09yiWZJHw5j4nx@cluster0.zw8ek.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
   datasource:
-    url: DATA URL HERE
-    driverClassName: "com.mysql.cj.jdbc.Driver"
-    username: USERNAME
-    password: PASSWORD
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres
+    username: postgres.glzodktgdemtquklitap
+    password: Nhacute123.
   jpa:
+    show-sql: true
     hibernate:
       ddl-auto: update
-    show-sql: true

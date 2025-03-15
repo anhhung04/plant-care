@@ -1,10 +1,12 @@
 package com.plantcare.mobile.dtoGlobal.response;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import lombok.*;
+import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder
