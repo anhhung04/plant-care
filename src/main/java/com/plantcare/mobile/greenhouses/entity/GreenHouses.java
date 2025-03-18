@@ -19,8 +19,11 @@ public class GreenHouses {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID greenhouse_id;
-    private String user_id;
+    @Column(name="greenhouse_id")
+    private UUID greenhouseId;
+    
+    @Column(name="user_id")
+    private String userId;
     private String name;
     private String location;
     private Boolean status;

@@ -1,4 +1,4 @@
-package com.plantcare.mobile.greenhouses.entity;
+package com.plantcare.mobile.gardens.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -19,7 +18,9 @@ public class Gardens {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID garden_id;
+    @Column(name = "garden_id")
+    private UUID gardenId;
     private String name;
-    private String land_area;
+    @Column(name = "land_area")
+    private String landArea;
 }
