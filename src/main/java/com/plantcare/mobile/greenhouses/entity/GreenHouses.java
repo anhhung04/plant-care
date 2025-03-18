@@ -21,8 +21,8 @@ public class GreenHouses {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name="greenhouse_id")
     private UUID greenhouseId;
-    
-    @Column(name="user_id")
+
+    @Column(name = "user_id", nullable = false)
     private String userId;
     private String name;
     private String location;
