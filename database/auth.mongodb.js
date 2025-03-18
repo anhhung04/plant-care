@@ -120,6 +120,14 @@ db.createCollection('greenhouses', {
                                     value: { bsonType: "double" },
                                     unit: { bsonType: "string" }
                                 }
+                            },
+                            light_sensor: {
+                                bsonType: "object",
+                                required: ["value", "unit"],
+                                properties: {
+                                    value: { bsonType: "double" },
+                                    unit: { bsonType: "string" }
+                                }
                             }
                         }
                     }
@@ -173,33 +181,41 @@ db.users.insertOne({
 });
 
 db.greenhouses.insertMany([{
-        name: "Greenhouse 1",
-        location: "Khu A",
-        page: 1,
-        fields: [{
-            temperature_sensor: {
-                value: 25.5,
-                unit: "degree"
-            },
-            humidity_sensor: {
-                value: 65.0,
-                unit: "%"
-            }
-        }]
-    },
-    {
-        name: "Greenhouse 2",
-        location: "Khu B",
-        page: 1,
-        fields: [{
-            temperature_sensor: {
-                value: 26.0,
-                unit: "degree"
-            },
-            humidity_sensor: {
-                value: 70.0,
-                unit: "%"
-            }
-        }]
-    }
+    name: "Greenhouse 1",
+    location: "Khu A",
+    page: 1,
+    fields: [{
+        temperature_sensor: {
+            value: 25.5,
+            unit: "degree"
+        },
+        humidity_sensor: {
+            value: 65.0,
+            unit: "%"
+        },
+        light_sensor: {
+            value: 500.0,
+            unit: "lux"
+        }
+    }]
+},
+{
+    name: "Greenhouse 2",
+    location: "Khu B",
+    page: 1,
+    fields: [{
+        temperature_sensor: {
+            value: 26.0,
+            unit: "degree"
+        },
+        humidity_sensor: {
+            value: 70.0,
+            unit: "%"
+        },
+        light_sensor: {
+            value: 600.0,
+            unit: "lux"
+        }
+    }]
+}
 ]);
