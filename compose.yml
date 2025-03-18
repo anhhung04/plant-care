@@ -17,6 +17,15 @@ services:
     restart: unless-stopped
     networks:
       - iot
+  auth-service:
+    build: ./auth-service
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    volumes:
+      - ./auth-service/keys:/app/keys
+    networks:
+      - iot
 
 networks:
   iot:
