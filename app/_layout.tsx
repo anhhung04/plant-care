@@ -1,39 +1,73 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
+  import { Redirect, Slot, Stack, useRouter } from 'expo-router';
+  import {AuthProvider, useAuth } from '../src/context/AuthContext';
+  import { useContext, useEffect, useState } from 'react';
+  import * as SplashScreen from 'expo-splash-screen';
+  import { StatusBar,Text } from 'react-native';
+import LottieView from 'lottie-react-native';
+import { LoadingScreen } from './auth/waiting';
+  // Component chính để quản lý layout và điều hướng
 
-import { useColorScheme } from '@/hooks/useColorScheme';
 
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+  const RootLayoutNav = () => {
+    const authContext = useAuth();
+    const authState = authContext?.authState;
+    const isFirstTimeUser = authContext?.isFirstTimeUser;
+    const loading = authContext?.loading;
+    const [isDelayedLoading, setIsDelayedLoading] = useState(true); // Tracks delay
+
+    // Handle the 2-second delay
+    useEffect(() => {
+      if (!loading) {
+        // If auth loading is done, wait 2 seconds before clearing the delayed loading state
+        const timer = setTimeout(() => {
+          setIsDelayedLoading(false);
+        }, 5000); // 2000ms = 2 seconds
+
+        // Cleanup timer if component unmounts or authLoading changes
+        return () => clearTimeout(timer);
+      }
+    }, [loading]);
+
+    // Show loading screen if either auth is loading or delay hasn't completed
+    if (loading || isDelayedLoading) {
+      return <LoadingScreen />; // Your loading component
+    }
+
+    console.log("Rendering RootLayoutNav with:", 
+      { authenticated: authState?.authenticated, isFirstTimeUser,loading });
+      return (
+        <>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="auth/onboarding" />
+          <Stack.Screen name="auth/signup" />
+          <Stack.Screen name="auth/signin" />
+          <Stack.Screen name="auth/waiting" />
+          <Stack.Screen name="auth/forgot" />
+          <Stack.Screen name="(tabs)" />
+        </Stack>
+      </>
+      );
+    }
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const [loaded] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
-
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-      <StatusBar style="auto" />
-    </ThemeProvider>
-  );
+      StatusBar.setTranslucent(true);
+      StatusBar.setBackgroundColor('transparent');
+      return (
+        <AuthProvider>
+            <RootLayoutNav />
+        </AuthProvider>
+      );
 }
+    // useEffect(() => {
+    //   // Ngăn splash screen ẩn cho đến khi điều hướng hoàn tất
+    //   SplashScreen.preventAutoHideAsync();
+    //   if (isFirstLaunch) {
+    //     router.replace('/(auth)/onboarding');
+    //   } else if (!user) {
+    //     router.replace('/(auth)/signin'); // Nếu chưa đăng nhập, đi tới signin
+    //   } else {
+    //     router.replace('/(tabs)/(home)'); // Nếu đã đăng nhập, đi tới tabs
+    //   }
+    //   SplashScreen.hideAsync();
+    //   // Ẩn splash screen sau khi điều hướng
+    // }, [user, isFirstLaunch, router]);

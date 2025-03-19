@@ -1,45 +1,200 @@
-import { Tabs } from 'expo-router';
 import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { Redirect, SplashScreen, Tabs } from 'expo-router';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
+import { Feather } from '@expo/vector-icons';
+import { colors } from '@/assets/fonts/colors';
+import { fonts } from '@/assets/fonts/font';
+import { useState, createContext, useContext } from "react";
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { Text, BottomNavigation } from 'react-native-paper';
+import { CommonActions } from '@react-navigation/native';
+import Dashboard from './dashboard';
+import Reminder from './reminder';
+import HomeScreen from '.';
+import Setting from './setting';
+import Profile from './profile';
+import { useAuth } from '@/src/context/AuthContext';
+export const TabBarContext = createContext({
+  showTabBar: () => {},
+  hideTabBar: () => {},
+});
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const Tab = createBottomTabNavigator();
+  const [tabBarVisible, setTabBarVisible] = useState(true);
+
+  const authContext = useAuth();
+  const authState = authContext?.authState;
+  const isFirstTimeUser = authContext?.isFirstTimeUser;
+  const loading = authContext?.loading;
+
+  if (loading){
+    return <Text style={{fontSize: 100}}>Loading...</Text>;
+  }
+     if (!authState?.authenticated) {
+      if (isFirstTimeUser) {
+        return <Redirect href={'/auth/onboarding'} />;
+      } else {
+        return <Redirect href={'/auth/signin'} />;
+      }
+    }
+    
 
   return (
-    <Tabs
+    <TabBarContext.Provider value={{ showTabBar: () => setTabBarVisible(true), hideTabBar: () => setTabBarVisible(false) }}>  
+    <Tab.Navigator
+      tabBar={({ navigation, state, descriptors, insets }) => (
+        <BottomNavigation.Bar
+          navigationState={state}
+          safeAreaInsets={insets}
+          activeColor={colors.primary}
+          inactiveColor={colors.secondary}
+          style={{ ...styles.tabBar, display: tabBarVisible ? "flex" : "none" }}
+          onTabPress={({ route, preventDefault }) => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (event.defaultPrevented) {
+              preventDefault();
+            } else {
+             navigation.dispatch({
+                ...CommonActions.navigate(route.name, route.params),
+                target: state.key,
+              });
+            }
+          }}
+          renderIcon={({ route, focused, color }) => {
+            const { options } = descriptors[route.key];
+            if (options.tabBarIcon) {
+              return options.tabBarIcon({ focused, color, size: 24 });
+            }
+
+            return null;
+          }}
+          getLabelText={({ route }) => {
+            const { options } = descriptors[route.key];
+            const label =
+              options.tabBarLabel !== undefined
+                ? options.tabBarLabel
+                : options.title !== undefined
+                ? options.title
+                : route.name;
+
+            return typeof label === 'string' ? label : undefined;
+          }} 
+          keyboardHidesNavigationBar={true}
+          theme={{
+            colors: {
+              secondaryContainer: '#b8e7bb', // Semi-transparent white
+            }
+          }}
+        />
+      )}
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
+        tabBarStyle: {...styles.tabBar, display: tabBarVisible ? "flex" : "none" },
+        // tabBarActiveTintColor: colors.primary,
+        // tabBarInactiveTintColor: colors.secondary,
+        // tabBarLabelStyle: styles.tabBarLabel,
+        // tabBarShowLabel: true,
+        // tabBarHideOnKeyboard: true,
+        // tabBarBackground: () => (
+        //   <View style={styles.tabBarBackground} />
+        // ),
+      }}
+      initialRouteName='index'
+    >
+      
+      <Tab.Screen 
+        name="dashboard" 
+        component={Dashboard}
+        options={{ 
+          title: 'Thống kê',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="bar-chart-2" size={size} color={color} />
+          ),
+        }} 
       />
-      <Tabs.Screen
-        name="explore"
-        options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
+      
+      <Tab.Screen 
+        name="reminder" 
+        component={Reminder}
+        options={{ 
+          title: 'Nhắc nhở',
+          tabBarIcon: ({ color, size }) => (
+            <View style={styles.reminderIconContainer}>
+              <Feather name="bell" size={size} color={color} />
+            </View>
+          ),
+        }} 
       />
-    </Tabs>
+      <Tab.Screen 
+        name="index" 
+        component={HomeScreen}
+        options={{ 
+          title: 'Trang chủ',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="home" size={size} color={color} />
+          ),
+        }} 
+      />
+      
+      <Tab.Screen 
+        name="setting" 
+        component={Setting}
+        options={{ 
+            title: 'Thiết bị',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="settings" size={size} color={color} />
+          ),
+        }} 
+      />
+      
+      <Tab.Screen 
+        name="profile" 
+        component={Profile}
+        options={{ 
+          title: 'Cá nhân',
+          tabBarIcon: ({ color, size }) => (
+            <Feather name="user" size={size} color={color} />
+          ),
+        }} 
+      />
+    </Tab.Navigator>
+    </TabBarContext.Provider>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    height:75,
+    elevation: 0, // Bỏ shadow trên Android
+    backgroundColor: 'rgba(255, 255, 255, 0.6)', // Tab bar trong suốt
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  tabBarBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Nền trắng mờ
+     // Hình nền
+  },
+  tabBarLabel: {
+    fontFamily: fonts.Regular,
+    fontSize: 14,
+    marginBottom: 5,
+  },
+  reminderIconContainer: {
+    // Tùy chọn làm nổi bật tab Reminder
+    // alignItems: 'center',
+    // justifyContent: 'center',
+  },
+});
