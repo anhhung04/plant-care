@@ -2,14 +2,14 @@ package com.plantcare.mobile.sensor;
 
 import java.util.List;
 
-import com.plantcare.mobile.sensor.dto.request.UpdateSensorDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.plantcare.mobile.sensor.entities.Sensor;
 import com.plantcare.mobile.dtoGlobal.response.ApiResponse;
+import com.plantcare.mobile.sensor.dto.request.UpdateSensorDto;
+import com.plantcare.mobile.sensor.entities.Sensor;
 
 @RestController
 @RequestMapping("/sensors")

@@ -1,12 +1,15 @@
 package com.plantcare.mobile.sensorsupabase.entity;
 
-import com.plantcare.mobile.greenhouses.entity.GreenHouses;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
-
 import java.time.Instant;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.plantcare.mobile.greenhouses.entity.GreenHouses;
+
+import lombok.*;
 
 @Entity
 @Getter
@@ -23,9 +26,14 @@ public class SensorSupabase {
     private UUID sensorId;
 
     @ManyToOne
-    @JoinColumn(name = "greenhouse_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_sensor_greenhouse",
-                    foreignKeyDefinition = "FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(greenhouse_id) ON DELETE CASCADE"))
+    @JoinColumn(
+            name = "greenhouse_id",
+            nullable = false,
+            foreignKey =
+                    @ForeignKey(
+                            name = "fk_sensor_greenhouse",
+                            foreignKeyDefinition =
+                                    "FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(greenhouse_id) ON DELETE CASCADE"))
     private GreenHouses greenhouse;
 
     @Column(name = "type", nullable = false, length = 50)

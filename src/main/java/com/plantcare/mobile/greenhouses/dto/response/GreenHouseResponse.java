@@ -1,10 +1,9 @@
 package com.plantcare.mobile.greenhouses.dto.response;
 
-import jakarta.persistence.Column;
-import lombok.*;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
+
+import lombok.*;
 
 @Data
 @Getter

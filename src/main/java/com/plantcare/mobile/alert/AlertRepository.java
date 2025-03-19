@@ -1,11 +1,11 @@
 package com.plantcare.mobile.alert;
 
-import com.plantcare.mobile.alert.entity.Alert;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
+import com.plantcare.mobile.alert.entity.Alert;
 
 @Repository
-public interface AlertRepository extends JpaRepository<Alert, UUID> {
-}
+public interface AlertRepository extends JpaRepository<Alert, UUID> {}

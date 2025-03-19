@@ -1,12 +1,13 @@
 package com.plantcare.mobile.gardens.entity;
 
+import java.util.UUID;
+
 import jakarta.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -20,7 +21,9 @@ public class Gardens {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "garden_id")
     private UUID gardenId;
+
     private String name;
+
     @Column(name = "land_area")
     private String landArea;
 }

@@ -1,10 +1,11 @@
 package com.plantcare.mobile.greenhouses.entity;
 
-import jakarta.persistence.Embeddable;
-import lombok.*;
-
 import java.io.Serializable;
 import java.util.UUID;
+
+import jakarta.persistence.Embeddable;
+
+import lombok.*;
 
 @Embeddable
 @Getter

@@ -1,12 +1,15 @@
 package com.plantcare.mobile.alert.entity;
 
-import com.plantcare.mobile.sensorsupabase.entity.SensorSupabase;
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.annotations.GenericGenerator;
-
 import java.time.Instant;
 import java.util.UUID;
+
+import jakarta.persistence.*;
+
+import org.hibernate.annotations.GenericGenerator;
+
+import com.plantcare.mobile.sensorsupabase.entity.SensorSupabase;
+
+import lombok.*;
 
 @Entity
 @Getter
@@ -23,9 +26,14 @@ public class Alert {
     private UUID alertId;
 
     @ManyToOne
-    @JoinColumn(name = "sensor_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_alert_sensor",
-                    foreignKeyDefinition = "FOREIGN KEY (sensor_id) REFERENCES sensors(sensor_id) ON DELETE CASCADE"))
+    @JoinColumn(
+            name = "sensor_id",
+            nullable = false,
+            foreignKey =
+                    @ForeignKey(
+                            name = "fk_alert_sensor",
+                            foreignKeyDefinition =
+                                    "FOREIGN KEY (sensor_id) REFERENCES sensors(sensor_id) ON DELETE CASCADE"))
     private SensorSupabase sensor;
 
     @Column(name = "message")

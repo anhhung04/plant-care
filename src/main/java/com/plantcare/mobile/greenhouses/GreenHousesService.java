@@ -1,31 +1,29 @@
 package com.plantcare.mobile.greenhouses;
 
-import com.plantcare.mobile.greenhouses.dto.request.GreenHouseCreateRequest;
-import com.plantcare.mobile.greenhouses.dto.request.SubGreenHouse;
-import com.plantcare.mobile.greenhouses.dto.response.GreenHouseResponse;
-import com.plantcare.mobile.greenhouses.entity.GreenHouses;
-import com.plantcare.mobile.greenhouses.mapper.GreenHouseMapper;
-import com.plantcare.mobile.greenhouses.repository.GreenHousesRepository;
-import com.plantcare.mobile.notification.NotificationRepository;
-import com.plantcare.mobile.notification.entity.Notification;
-import com.plantcare.mobile.sensor.SensorRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
+
 import jakarta.transaction.Transactional;
-import lombok.AccessLevel;
-import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
+import com.plantcare.mobile.greenhouses.dto.request.GreenHouseCreateRequest;
+import com.plantcare.mobile.greenhouses.dto.request.SubGreenHouse;
+import com.plantcare.mobile.greenhouses.dto.response.GreenHouseResponse;
+import com.plantcare.mobile.greenhouses.entity.GreenHouses;
+import com.plantcare.mobile.greenhouses.mapper.GreenHouseMapper;
+import com.plantcare.mobile.greenhouses.repository.GreenHousesRepository;
+import com.plantcare.mobile.sensor.SensorRepository;
+
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j
@@ -38,9 +36,9 @@ public class GreenHousesService {
     private SensorRepository sensorRepository;
     private SimpMessagingTemplate messagingTemplate;
 
-    //Update data tu dataservice
+    // Update data tu dataservice
     public void updateGreenhouse(Object dataUpdate) {
-        //Xu ly update data len mongodb o day
+        // Xu ly update data len mongodb o day
         messagingTemplate.convertAndSend("/topic/greenhouse/" + dataUpdate);
     }
 
@@ -54,11 +52,12 @@ public class GreenHousesService {
 
     public Page<GreenHouseResponse> getGreenHouse(String name, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return greenHousesRepository.findAllByName(name,pageable).map(greenHouseMapper::toGreenHouseResponse);
+        return greenHousesRepository.findAllByName(name, pageable).map(greenHouseMapper::toGreenHouseResponse);
     }
 
     public GreenHouseResponse updateGreenHouses(UUID greenhouseId) {
-        GreenHouses greenHouse = greenHousesRepository.findById(greenhouseId)
+        GreenHouses greenHouse = greenHousesRepository
+                .findById(greenhouseId)
                 .orElseThrow(() -> new RuntimeException("Greenhouse not found"));
 
         // fake data, we will implement later

@@ -1,13 +1,14 @@
 package com.plantcare.mobile.greenhouses.entity;
 
+import java.time.LocalDateTime;
+import java.util.UUID;
+
 import jakarta.persistence.*;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -19,11 +20,12 @@ public class GreenHouses {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name="greenhouse_id")
+    @Column(name = "greenhouse_id")
     private UUID greenhouseId;
 
     @Column(name = "user_id", nullable = false)
     private String userId;
+
     private String name;
     private String location;
     private Boolean status;

@@ -1,6 +1,5 @@
 package com.plantcare.mobile.greenhouses.dto.request;
 
-
 import lombok.*;
 
 @Data

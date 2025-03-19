@@ -1,13 +1,15 @@
 package com.plantcare.mobile.manage.entity;
 
-import com.plantcare.mobile.greenhouses.entity.GreenHouses;
+import java.util.UUID;
+
 import jakarta.persistence.*;
+
+import com.plantcare.mobile.greenhouses.entity.GreenHouses;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
-import java.util.UUID;
 
 @Entity
 @Getter
@@ -22,8 +24,14 @@ public class Manage {
     private UUID id;
 
     @ManyToOne
-    @JoinColumn(name = "greenhouse_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_gg_greenhouse", foreignKeyDefinition = "FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(greenhouse_id) ON DELETE CASCADE"))
+    @JoinColumn(
+            name = "greenhouse_id",
+            nullable = false,
+            foreignKey =
+                    @ForeignKey(
+                            name = "fk_gg_greenhouse",
+                            foreignKeyDefinition =
+                                    "FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(greenhouse_id) ON DELETE CASCADE"))
     private GreenHouses greenhouses;
 
     private UUID userId;

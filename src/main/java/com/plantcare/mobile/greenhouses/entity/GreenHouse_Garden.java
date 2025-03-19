@@ -1,7 +1,9 @@
 package com.plantcare.mobile.greenhouses.entity;
 
-import com.plantcare.mobile.gardens.entity.Gardens;
 import jakarta.persistence.*;
+
+import com.plantcare.mobile.gardens.entity.Gardens;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -20,13 +22,25 @@ public class GreenHouse_Garden {
 
     @ManyToOne
     @MapsId("greenhouseId")
-    @JoinColumn(name = "greenhouse_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_gg_greenhouse", foreignKeyDefinition = "FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(greenhouse_id) ON DELETE CASCADE"))
+    @JoinColumn(
+            name = "greenhouse_id",
+            nullable = false,
+            foreignKey =
+                    @ForeignKey(
+                            name = "fk_gg_greenhouse",
+                            foreignKeyDefinition =
+                                    "FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(greenhouse_id) ON DELETE CASCADE"))
     private GreenHouses greenhouses;
 
     @ManyToOne
     @MapsId("gardenId")
-    @JoinColumn(name = "garden_id", nullable = false,
-            foreignKey = @ForeignKey(name = "fk_gg_garden", foreignKeyDefinition = "FOREIGN KEY (garden_id) REFERENCES gardens(garden_id) ON DELETE CASCADE"))
+    @JoinColumn(
+            name = "garden_id",
+            nullable = false,
+            foreignKey =
+                    @ForeignKey(
+                            name = "fk_gg_garden",
+                            foreignKeyDefinition =
+                                    "FOREIGN KEY (garden_id) REFERENCES gardens(garden_id) ON DELETE CASCADE"))
     private Gardens gardens;
 }

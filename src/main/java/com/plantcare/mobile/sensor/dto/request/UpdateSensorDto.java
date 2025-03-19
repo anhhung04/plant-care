@@ -1,6 +1,5 @@
 package com.plantcare.mobile.sensor.dto.request;
 
-
 public class UpdateSensorDto {
     private String name;
     private String value;

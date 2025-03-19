@@ -2,12 +2,12 @@ package com.plantcare.mobile.sensor;
 
 import java.util.List;
 
-import com.plantcare.mobile.sensor.dto.request.UpdateSensorDto;
-import com.plantcare.mobile.sensor.entities.Sensor;
 import org.bson.Document;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.plantcare.mobile.sensor.dto.request.UpdateSensorDto;
+import com.plantcare.mobile.sensor.entities.Sensor;
 
 @Service
 public class SensorService {

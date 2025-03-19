@@ -7,8 +7,6 @@ import org.springframework.context.annotation.Configuration;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
-import org.springframework.data.mongodb.repository.config.EnableMongoRepositories;
-
 
 @Configuration
 public class MongoConfiguration {

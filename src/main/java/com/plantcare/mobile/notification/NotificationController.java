@@ -1,12 +1,14 @@
 package com.plantcare.mobile.notification;
 
-import com.plantcare.mobile.notification.entity.Notification;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import java.util.List;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import com.plantcare.mobile.notification.entity.Notification;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @RestController
 @RequestMapping("/notifications")

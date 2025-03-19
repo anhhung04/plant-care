@@ -1,13 +1,16 @@
 package com.plantcare.mobile.notification;
 
-import com.plantcare.mobile.notification.entity.Notification;
+import java.util.List;
+
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
-import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.stereotype.Service;
 
-import java.util.List;
+import com.plantcare.mobile.notification.entity.Notification;
+
+import lombok.extern.slf4j.Slf4j;
 
 @Service
 @Slf4j

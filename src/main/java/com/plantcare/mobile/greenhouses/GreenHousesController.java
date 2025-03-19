@@ -1,24 +1,20 @@
 package com.plantcare.mobile.greenhouses;
 
+import java.util.List;
+import java.util.UUID;
+
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.web.bind.annotation.*;
+
 import com.plantcare.mobile.dtoGlobal.response.ApiResponse;
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseCreateRequest;
 import com.plantcare.mobile.greenhouses.dto.request.SubGreenHouse;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseResponse;
-import com.plantcare.mobile.greenhouses.entity.GreenHouses;
-import com.plantcare.mobile.notification.NotificationService;
-import com.plantcare.mobile.notification.entity.Notification;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.messaging.handler.annotation.SendTo;
-import org.springframework.web.bind.annotation.*;
-
-import java.awt.print.Pageable;
-import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequestMapping("/greenhouses")
@@ -31,10 +27,9 @@ public class GreenHousesController {
     public ApiResponse<Page<GreenHouseResponse>> getGreenHouses(
             @RequestParam(defaultValue = "") String name,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
-    ) {
+            @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.<Page<GreenHouseResponse>>builder()
-                .data(greenHousesService.getGreenHouse(name,page,size))
+                .data(greenHousesService.getGreenHouse(name, page, size))
                 .status(HttpStatus.OK)
                 .message("get greenhouse successful")
                 .success(true)
@@ -57,10 +52,9 @@ public class GreenHousesController {
         greenHousesService.subToGreenHouses(greenhouseIds);
     }
 
-
-//    @PostMapping("/unsub")
-//    public ApiResponse<String> unSub(@RequestBody List<SubGreenHouse> subGreenHouses) {
-//    }
+    //    @PostMapping("/unsub")
+    //    public ApiResponse<String> unSub(@RequestBody List<SubGreenHouse> subGreenHouses) {
+    //    }
 
     @PostMapping("/create")
     public ApiResponse<GreenHouseResponse> create(@RequestBody GreenHouseCreateRequest greenHouseCreateRequest) {

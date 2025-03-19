@@ -1,16 +1,15 @@
 package com.plantcare.mobile.sensor;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
-import com.plantcare.mobile.sensor.entities.Sensor;
 import org.bson.Document;
 import org.bson.types.ObjectId;
 import org.springframework.stereotype.Repository;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.plantcare.mobile.sensor.entities.Sensor;
 
 @Repository
 public class SensorRepository {
@@ -56,8 +55,8 @@ public class SensorRepository {
     private boolean updateStatus(String id, boolean status) {
         Document updateDoc = new Document("$set", new Document("isEnabled", status));
         return sensorCollection
-                .updateOne(new Document("_id", new ObjectId(id)), updateDoc)
-                .getModifiedCount()
+                        .updateOne(new Document("_id", new ObjectId(id)), updateDoc)
+                        .getModifiedCount()
                 > 0;
     }
 

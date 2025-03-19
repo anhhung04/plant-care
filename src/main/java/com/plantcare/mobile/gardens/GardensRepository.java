@@ -1,11 +1,11 @@
 package com.plantcare.mobile.gardens;
 
-import com.plantcare.mobile.gardens.entity.Gardens;
+import java.util.UUID;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.UUID;
+import com.plantcare.mobile.gardens.entity.Gardens;
 
 @Repository
-public interface GardensRepository extends JpaRepository<Gardens, UUID> {
-}
+public interface GardensRepository extends JpaRepository<Gardens, UUID> {}
