@@ -34,3 +34,6 @@ services:
 networks:
   iot:
     driver: bridge
+
+volumes:
+  postgres_data:
