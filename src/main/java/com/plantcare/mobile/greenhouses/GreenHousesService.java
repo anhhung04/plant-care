@@ -2,8 +2,11 @@ package com.plantcare.mobile.greenhouses;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
+import com.plantcare.mobile.clientsocket.ClientSocketSessionRegistry;
+import com.plantcare.mobile.greenhouses.dto.request.SubscribeRequest;
 import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
@@ -13,7 +16,6 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseCreateRequest;
-import com.plantcare.mobile.greenhouses.dto.request.SubGreenHouse;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseResponse;
 import com.plantcare.mobile.greenhouses.entity.GreenHouses;
 import com.plantcare.mobile.greenhouses.mapper.GreenHouseMapper;
@@ -35,6 +37,7 @@ public class GreenHousesService {
     private GreenHouseMapper greenHouseMapper;
     private SensorRepository sensorRepository;
     private SimpMessagingTemplate messagingTemplate;
+    private final ClientSocketSessionRegistry clientSocketSessionRegistry;
 
     // Update data tu dataservice
     public void updateGreenhouse(Object dataUpdate) {
@@ -52,7 +55,10 @@ public class GreenHousesService {
 
     public Page<GreenHouseResponse> getGreenHouse(String name, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return greenHousesRepository.findAllByName(name, pageable).map(greenHouseMapper::toGreenHouseResponse);
+        if (!Objects.equals(name, "")){
+            return greenHousesRepository.findAllByName(name, pageable).map(greenHouseMapper::toGreenHouseResponse);
+        }
+        return greenHousesRepository.findAll(pageable).map(greenHouseMapper::toGreenHouseResponse);
     }
 
     public GreenHouseResponse updateGreenHouses(UUID greenhouseId) {
@@ -64,13 +70,31 @@ public class GreenHousesService {
         greenHouse.setCreatedAt(LocalDateTime.now());
         GreenHouseResponse response = greenHouseMapper.toGreenHouseResponse(greenHousesRepository.save(greenHouse));
 
-        messagingTemplate.convertAndSend("/topic/greenhouse/" + greenhouseId, response);
+        // 🔹 Lấy danh sách user đang subscribe greenhouseId này
+        List<UUID> subscribers = clientSocketSessionRegistry.getSubscribers(greenhouseId);
+        log.info("subscribers: {}", subscribers);
+        // 🔹 Gửi dữ liệu WebSocket đến từng user đang subscribe
+        for (UUID userId : subscribers) {
+            log.info("userID sub " + userId);
+            messagingTemplate.convertAndSend("/user/" + userId + "/queue/greenhouse", response);
+        }
+
         return response;
     }
 
-    public void subToGreenHouses(List<SubGreenHouse> subGreenHouses) {
-        for (SubGreenHouse sub : subGreenHouses) {
-            messagingTemplate.convertAndSend("/topic/greenhouse/" + sub.getId(), "Subscribed successfully!");
+    public void subToGreenHouses(String token, SubscribeRequest subGreenHouses) {
+        token = token.substring(7);
+
+        log.info("token "+token);
+
+        UUID userId= UUID.fromString("c670e06e-afa8-4d4f-8005-b7bea9b38054");
+
+        clientSocketSessionRegistry.unsubscribeAll(userId);
+
+        for (UUID sub : subGreenHouses.getGreenhouseIds()) {
+            clientSocketSessionRegistry.subscribe(userId,sub);
+            log.info("Userid {} subscribed to greenhouse {}", userId, sub);
         }
     }
+
 }

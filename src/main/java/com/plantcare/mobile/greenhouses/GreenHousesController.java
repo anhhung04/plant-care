@@ -3,6 +3,9 @@ package com.plantcare.mobile.greenhouses;
 import java.util.List;
 import java.util.UUID;
 
+import com.plantcare.mobile.exception.AppException;
+import com.plantcare.mobile.exception.ErrorCode;
+import com.plantcare.mobile.greenhouses.dto.request.SubscribeRequest;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.MessageMapping;
@@ -10,7 +13,6 @@ import org.springframework.web.bind.annotation.*;
 
 import com.plantcare.mobile.dtoGlobal.response.ApiResponse;
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseCreateRequest;
-import com.plantcare.mobile.greenhouses.dto.request.SubGreenHouse;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -46,13 +48,20 @@ public class GreenHousesController {
                 .build();
     }
 
-    @MessageMapping("/sub")
-    public void subToGreenHouses(@RequestBody List<SubGreenHouse> greenhouseIds) {
+
+    @MessageMapping("/subscribe")
+    public void subToGreenHouses(@RequestHeader("Authorization") String token,@RequestBody SubscribeRequest greenhouseIds) {
         // realtime processing
-        greenHousesService.subToGreenHouses(greenhouseIds);
+        try {
+            greenHousesService.subToGreenHouses(token,greenhouseIds);
+        }
+        catch(Exception e) {
+            log.error(e.getMessage());
+            throw new AppException(ErrorCode.SOCKET_NOT_CONNECTED);
+        }
     }
 
-    //    @PostMapping("/unsub")
+    //    @PostMapping("/unsubscribe")
     //    public ApiResponse<String> unSub(@RequestBody List<SubGreenHouse> subGreenHouses) {
     //    }
 
