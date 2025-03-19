@@ -318,7 +318,3 @@ const styles = StyleSheet.create({
 });
 
 export default ReminderListScreen;
-
-function hideTabBar() {
-  throw new Error('Function not implemented.');
-}

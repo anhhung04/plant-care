@@ -14,9 +14,7 @@ import {
 import {colors} from '@/assets/fonts/colors';
 import { ChangeAreaModalProps} from '@/src/utils/modal';
 import { ScrollView, Image } from 'react-native';
-import { Switch, Card, Title, Paragraph, Button } from 'react-native-paper';
-import { Feather } from '@expo/vector-icons';
-import { hide } from 'expo-splash-screen';
+import { Card} from 'react-native-paper';
 const { height } = Dimensions.get('window');
 import { URL } from '../utils/farmpic';
 

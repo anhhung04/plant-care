@@ -5,12 +5,8 @@ import {
   View, 
   TextInput, 
   TouchableOpacity, 
-  ScrollView,
-  Platform,
-  Pressable
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import { AntDesign } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/assets/fonts/colors';
 

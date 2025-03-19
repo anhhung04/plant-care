@@ -2,18 +2,14 @@ import React, { useRef, useState, useEffect, useContext } from 'react';
 import {
   View,
   StyleSheet,
-  Text,
   TouchableOpacity,
   Animated,
   Dimensions,
   PanResponder,
-  StatusBar,
-  Platform,
   BackHandler
 } from 'react-native';
 import {colors} from '@/assets/fonts/colors';
-import { CreateReminderModalProps, ReminderItem} from '@/src/utils/modal';
-import { Switch, Card, Title, Paragraph, Button } from 'react-native-paper';
+import { CreateReminderModalProps} from '@/src/utils/modal';
 import ReminderCreateForm from './ReminerCreateForm';
 import { ReminderCreate } from '../utils/reminderType';
 const { height } = Dimensions.get('window');

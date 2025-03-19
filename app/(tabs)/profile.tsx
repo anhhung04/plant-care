@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Switch,
   Image,
+  Alert,
 } from 'react-native';
 import FeatherIcon from '@expo/vector-icons/Feather';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -48,6 +49,27 @@ export default function Profile() {
       console.error("onLogout function error");
     }
     router.push("/auth/signin")
+  }
+
+  const pressLogout = () => {
+    Alert.alert(
+      'Đăng xuất',
+      'Bạn có chắc chắn muốn đăng xuất không?',
+      [
+        {
+          text: 'Hủy',
+          style: 'cancel',
+        },
+        {
+          text: 'Xác nhận',
+          onPress: () => {
+            // Place your logout logic here
+            handleLogout();
+          },
+          style: 'destructive',
+        },
+      ]
+    );
   }
 
   const setArea = () =>  {
@@ -161,7 +183,7 @@ export default function Profile() {
 
             <TouchableOpacity
               onPress={() => {
-                handleLogout()
+                pressLogout();
               }}
               style={styles.row}>
               <View style={[styles.rowIcon, { backgroundColor: 'red' }]}>
