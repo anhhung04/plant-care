@@ -26,6 +26,10 @@ services:
       - ./auth-service/keys:/app/keys
     networks:
       - iot
+  database:
+    extends:
+      file: ./database/docker-compose.yml
+      service: db
 
 networks:
   iot:

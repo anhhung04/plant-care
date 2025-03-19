@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS greenhouse_garden (
         ON DELETE CASCADE,
     CONSTRAINT fk_gg_garden
         FOREIGN KEY (garden_id)
-        REFERENCES gardens(garden_id)cl
+        REFERENCES gardens(garden_id)
         ON DELETE CASCADE
 );
 
