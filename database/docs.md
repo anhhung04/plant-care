@@ -22,9 +22,22 @@ POSTGRES_PASSWORD=your_secure_password
 POSTGRES_DB=your_database
 ```
 
-3. Khởi động database container:
+3. Cách chạy
+## Cách 1: Chạy trực tiếp từ thư mục database
+
 ```bash
+# Di chuyển vào thư mục database
+cd database
+
+# Khởi chạy container
 docker-compose up -d
+```
+
+## Cách 2: Chạy từ thư mục root của project
+
+```bash
+# Đứng tại thư mục root của project
+docker-compose up database -d
 ```
 
 4. Truy cập vào database:
