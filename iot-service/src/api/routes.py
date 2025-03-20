@@ -3,8 +3,8 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from ..db.models import Device, DeviceCommand, SensorReading
-from ..db.repository import (
+from db.models import Device, DeviceCommand, SensorReading
+from db.repository import (
     DeviceCommandRepository,
     DeviceRepository,
     SensorReadingRepository,
