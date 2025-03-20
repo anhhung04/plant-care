@@ -77,6 +77,7 @@ public class GreenHousesService {
         for (UUID userId : subscribers) {
             log.info("userID sub " + userId);
             messagingTemplate.convertAndSend("/user/" + userId + "/queue/greenhouse", response);
+            log.info("/user/" + userId + "/queue/greenhouse"+response);
         }
 
         return response;
