@@ -3,14 +3,14 @@ from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
-from ..db.models import Device, DeviceCommand, SensorReading
-from ..db.repository import (
+from db.models import Device, DeviceCommand, SensorReading
+from db.repository import (
     DeviceCommandRepository,
     DeviceRepository,
     SensorReadingRepository,
     get_database,
 )
-from ..mqtt.client import MQTTClient
+from mqtt.client import MQTTClient
 from . import models
 
 router = APIRouter()

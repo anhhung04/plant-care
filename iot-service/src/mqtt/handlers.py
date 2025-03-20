@@ -4,8 +4,8 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from ..db.models import SensorReading, DeviceCommand
-from ..db.repository import SensorReadingRepository, DeviceCommandRepository
+from db.models import SensorReading, DeviceCommand
+from db.repository import SensorReadingRepository, DeviceCommandRepository
 
 logger = logging.getLogger(__name__)
 

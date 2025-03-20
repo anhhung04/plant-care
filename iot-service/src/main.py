@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from api.routes import router as api_router
-from config import get_settings
+from config.settings import get_settings
 from config.logging_config import configure_logging
 from db.repository import get_database, close_database_connection
 from mqtt.client import MQTTClient
