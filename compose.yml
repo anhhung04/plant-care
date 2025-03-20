@@ -12,7 +12,7 @@ services:
       - iot
   data-processor:
     extends:
-      file: ./data-service/compose.yml
+      file: ./iot-service/compose.yml
       service: app
     networks:
       - iot
