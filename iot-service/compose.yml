@@ -1,0 +1,6 @@
+services:
+  app:
+    build: .
+    image: plant-care/iot-service
+    ports:
+      - "8000:8000"

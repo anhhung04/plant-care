@@ -1,15 +1,8 @@
 services:
-  api-gateway:
-    build: ./api-gateway
-    ports:
-      - "3080:80"
-  mqtt-server:
-    build: ./mqtt-server
-    ports:
-      - "1884:1884"
-    restart: unless-stopped
-    networks:
-      - iot
+  # api-gateway:
+  #   build: ./api-gateway
+  #   ports:
+  #     - "3080:80"
   iot-db:
     build: ./iot-db
     ports:
@@ -17,6 +10,14 @@ services:
     restart: unless-stopped
     networks:
       - iot
+  data-processor:
+    extends:
+      file: ./data-service/compose.yml
+      service: app
+    networks:
+      - iot
+    depends_on:
+      - iot-db
 
 networks:
   iot:
