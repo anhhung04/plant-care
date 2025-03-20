@@ -4,3 +4,39 @@ services:
     image: plant-care/iot-service
     ports:
       - "8000:8000"
+    environment:
+      # Application settings
+      APP_NAME: ${APP_NAME:-IoT Service}
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+      API_PREFIX: ${API_PREFIX:-/api/v1}
+      DEBUG: ${DEBUG:-false}
+
+      # CORS settings
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+      CORS_ALLOW_CREDENTIALS: ${CORS_ALLOW_CREDENTIALS:-true}
+      CORS_ALLOW_METHODS: ${CORS_ALLOW_METHODS:-*}
+      CORS_ALLOW_HEADERS: ${CORS_ALLOW_HEADERS:-*}
+
+      # MongoDB settings
+      MONGODB_URI: ${MONGODB_URI:-mongodb://iot-db:27017}
+      MONGODB_DB_NAME: ${MONGODB_DB_NAME:-plant_care}
+
+      # MQTT settings
+      MQTT_HOST: ${MQTT_HOST:-mqtt-server}
+      MQTT_PORT: ${MQTT_PORT:-1884}
+      MQTT_CLIENT_ID: ${MQTT_CLIENT_ID:-iot-service}
+      MQTT_USERNAME: ${MQTT_USERNAME}
+      MQTT_PASSWORD: ${MQTT_PASSWORD}
+      MQTT_USE_TLS: ${MQTT_USE_TLS:-false}
+      MQTT_TLS_CA_CERTS: ${MQTT_TLS_CA_CERTS}
+      MQTT_TLS_CERTFILE: ${MQTT_TLS_CERTFILE}
+      MQTT_TLS_KEYFILE: ${MQTT_TLS_KEYFILE}
+
+      # JWT settings
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-supersecret}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_ACCESS_TOKEN_EXPIRE_MINUTES: ${JWT_ACCESS_TOKEN_EXPIRE_MINUTES:-30}
+
+      # Logging settings
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_FORMAT: ${LOG_FORMAT:-%(asctime)s - %(name)s - %(levelname)s - %(message)s}
