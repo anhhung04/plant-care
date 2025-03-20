@@ -2,37 +2,24 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi.responses import JSONResponse
 
-from db.models import Device, DeviceCommand, SensorReading
-from db.repository import (
-    DeviceCommandRepository,
-    DeviceRepository,
-    SensorReadingRepository,
-    get_database,
-)
+from db.models import *
+from db.repository import GreenhouseRepository
+from db import get_database
 from mqtt.client import MQTTClient
-from . import models
+from api.models import *
 
-router = APIRouter()
+router = APIRouter(prefix="/greenhouses", tags=["greenhouses"])
 
 
-def get_device_repository():
+def get_repository() -> GreenhouseRepository:
     db = get_database()
-    return DeviceRepository(db)
-
-
-def get_sensor_reading_repository():
-    db = get_database()
-    return SensorReadingRepository(db)
-
-
-def get_command_repository():
-    db = get_database()
-    return DeviceCommandRepository(db)
+    return GreenhouseRepository(db)
 
 
 def get_mqtt_client():
-    from ..config import get_settings
+    from config.settings import get_settings
 
     settings = get_settings()
 
@@ -46,124 +33,227 @@ def get_mqtt_client():
     )
     return client
 
-
-@router.post(
-    "/devices",
-    response_model=models.DeviceResponse,
-    status_code=status.HTTP_201_CREATED,
-    summary="Create a new device",
-    description="Create a new IoT device in the system",
-)
-def create_device(
-    device: models.DeviceCreate, repo: DeviceRepository = Depends(get_device_repository)
+@router.post("", response_model=GreenhouseResponse, status_code=status.HTTP_201_CREATED)
+async def create_greenhouse(
+    request: CreateGreenhouseRequest,
+    repo: GreenhouseRepository = Depends(get_repository)
 ):
-    """Create a new device."""
-    existing_device = repo.get_by_id(device.device_id)
-    if existing_device:
+    """Create a new greenhouse."""
+    try:
+        greenhouse = Greenhouse(
+            greenhouse_id=f"gh_{datetime.utcnow().timestamp()}",  # Generate unique ID
+            name=request.name,
+            location=request.location,
+            owner=request.owner,
+            metadata=request.metadata
+        )
+        
+        greenhouse_id = repo.create_greenhouse(greenhouse)
+        created_greenhouse = repo.get_greenhouse(greenhouse_id)
+        
+        if not created_greenhouse:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create greenhouse"
+            )
+            
+        return created_greenhouse
+        
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail=f"Device with ID {device.device_id} already exists",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
         )
 
-    new_device = Device(
-        device_id=device.device_id,
-        name=device.name,
-        device_type=device.device_type,
-        location=device.location,
-        metadata=device.metadata or {},
+
+@router.get("", response_model=List[GreenhouseResponse])
+async def list_greenhouses(
+    owner: Optional[str] = None,
+    location: Optional[str] = None,
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=10, ge=1, le=100),
+    repo: GreenhouseRepository = Depends(get_repository)
+):
+    """List all greenhouses with optional filtering."""
+    try:
+        greenhouses = repo.get_all_greenhouses(
+            owner=owner,
+            location=location,
+            offset=offset,
+            limit=limit
+        )
+        return greenhouses
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/{greenhouse_id}", response_model=GreenhouseResponse)
+async def get_greenhouse(
+    greenhouse_id: str,
+    repo: GreenhouseRepository = Depends(get_repository)
+):
+    """Get detailed information about a specific greenhouse."""
+    greenhouse = repo.get_greenhouse(greenhouse_id)
+    if not greenhouse:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Greenhouse {greenhouse_id} not found"
+        )
+    return greenhouse
+
+
+@router.delete("/{greenhouse_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_greenhouse(
+    greenhouse_id: str,
+    repo: GreenhouseRepository = Depends(get_repository)
+):
+    """Delete a greenhouse and all its fields."""
+    success = repo.delete_greenhouse(greenhouse_id)
+    if not success:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Greenhouse {greenhouse_id} not found"
+        )
+    return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/{greenhouse_id}/fields", response_model=FieldResponse)
+async def create_field(
+    greenhouse_id: str,
+    request: CreateFieldRequest,
+    repo: GreenhouseRepository = Depends(get_repository)
+):
+    """Add a new field to a greenhouse."""
+    try:
+        field = GreenhouseField(metadata=request.metadata)
+        field_index = repo.add_field(greenhouse_id, field)
+        
+        if field_index is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Greenhouse {greenhouse_id} not found"
+            )
+            
+        return FieldResponse(
+            field_index=field_index,
+            sensors={},
+            metadata=request.metadata
+        )
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e)
+        )
+
+
+@router.get("/{greenhouse_id}/fields", response_model=List[FieldResponse])
+async def list_fields(
+    greenhouse_id: str,
+    repo: GreenhouseRepository = Depends(get_repository)
+):
+    """List all fields in a greenhouse."""
+    greenhouse = repo.get_greenhouse(greenhouse_id)
+    if not greenhouse:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Greenhouse {greenhouse_id} not found"
+        )
+        
+    return [
+        FieldResponse(
+            field_index=idx,
+            sensors={
+                "temperature_sensor": field.temperature_sensor,
+                "humidity_sensor": field.humidity_sensor,
+                "soil_moisture_sensor": field.soil_moisture_sensor,
+                "light_sensor": field.light_sensor,
+                "fan_status": field.fan_status,
+                "led_status": field.led_status,
+                "pump_status": field.pump_status
+            },
+            metadata=field.metadata
+        )
+        for idx, field in enumerate(greenhouse.fields)
+    ]
+
+
+@router.get("/{greenhouse_id}/fields/{field_index}", response_model=FieldResponse)
+async def get_field(
+    greenhouse_id: str,
+    field_index: int,
+    repo: GreenhouseRepository = Depends(get_repository)
+):
+    """Get detailed information about a specific field."""
+    greenhouse = repo.get_greenhouse(greenhouse_id)
+    if not greenhouse:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Greenhouse {greenhouse_id} not found"
+        )
+        
+    if field_index >= len(greenhouse.fields):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Field index {field_index} not found"
+        )
+        
+    field = greenhouse.fields[field_index]
+    return FieldResponse(
+        field_index=field_index,
+        sensors={
+            "temperature_sensor": field.temperature_sensor,
+            "humidity_sensor": field.humidity_sensor,
+            "soil_moisture_sensor": field.soil_moisture_sensor,
+            "light_sensor": field.light_sensor,
+            "fan_status": field.fan_status,
+            "led_status": field.led_status,
+            "pump_status": field.pump_status
+        },
+        metadata=field.metadata
     )
 
-    repo.create(new_device)
-    return new_device
 
-
-@router.get(
-    "/devices",
-    response_model=List[models.DeviceResponse],
-    summary="List devices",
-    description="List all devices with optional pagination",
-)
-def list_devices(
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of records to return"
-    ),
-    device_type: Optional[str] = Query(None, description="Filter by device type"),
-    repo: DeviceRepository = Depends(get_device_repository),
+@router.delete("/{greenhouse_id}/fields/{field_index}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_field(
+    greenhouse_id: str,
+    field_index: int,
+    repo: GreenhouseRepository = Depends(get_repository)
 ):
-    if device_type:
-        return repo.list_by_type(device_type)
-    return repo.list_all(skip=skip, limit=limit)
-
-
-@router.get(
-    "/devices/{device_id}",
-    response_model=models.DeviceResponse,
-    summary="Get device",
-    description="Get a device by its ID",
-)
-def get_device(device_id: str, repo: DeviceRepository = Depends(get_device_repository)):
-    device = repo.get_by_id(device_id)
-    if not device:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Device with ID {device_id} not found",
-        )
-    return device
-
-
-@router.put(
-    "/devices/{device_id}",
-    response_model=models.DeviceResponse,
-    summary="Update device",
-    description="Update a device's information",
-)
-def update_device(
-    device_id: str,
-    device_update: models.DeviceUpdate,
-    repo: DeviceRepository = Depends(get_device_repository),
-):
-    existing_device = repo.get_by_id(device_id)
-    if not existing_device:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Device with ID {device_id} not found",
-        )
-    update_data = device_update.model_dump(exclude_unset=True)
-    if not update_data:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="No fields to update"
-        )
-
-    success = repo.update(device_id, update_data)
+    """Delete a field from a greenhouse."""
+    success = repo.delete_field(greenhouse_id, field_index)
     if not success:
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update device",
-        )
-
-    return repo.get_by_id(device_id)
-
-
-@router.delete(
-    "/devices/{device_id}",
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Delete device",
-    description="Delete a device by its ID",
-)
-def delete_device(
-    device_id: str, repo: DeviceRepository = Depends(get_device_repository)
-):
-    existing_device = repo.get_by_id(device_id)
-    if not existing_device:
-        raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Device with ID {device_id} not found",
+            detail=f"Field {field_index} not found in greenhouse {greenhouse_id}"
         )
+    return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
 
-    success = repo.delete(device_id)
-    if not success:
+
+@router.get("/{greenhouse_id}/fields/{field_index}/history", response_model=List[SensorData])
+async def get_field_history(
+    greenhouse_id: str,
+    field_index: int,
+    sensor_type: str = Query(..., description="Type of sensor to get history for"),
+    start_time: datetime = Query(default=lambda: datetime.utcnow() - timedelta(days=1)),
+    end_time: datetime = Query(default=lambda: datetime.utcnow()),
+    repo: GreenhouseRepository = Depends(get_repository)
+):
+    """Get historical sensor data for a specific field."""
+    try:
+        history = repo.get_sensor_history(
+            greenhouse_id=greenhouse_id,
+            field_index=field_index,
+            sensor_type=sensor_type,
+            start_time=start_time,
+            end_time=end_time
+        )
+        return history
+    except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete device",
+            detail=str(e)
         )

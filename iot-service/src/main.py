@@ -49,12 +49,12 @@ async def lifespan(app: FastAPI):
     mqtt_client.connect()
     # dependency  builder (WIP)
     # device_repo = get_device_repository()
-    # reading_repo = get_sensor_reading_repository()
+    reading_repo = get_greenhouse_repo()
     # command_repo = get_command_repository()
 
-    # mqtt_client.register_handler(
-    #     "devices/+/readings/#", SensorReadingHandler(reading_repo)
-    # )
+    mqtt_client.register_handler(
+        settings.MQTT_USERNAME + "/groups/+/+/+", SensorReadingHandler(reading_repo)
+    )
     # mqtt_client.register_handler(
     #     "devices/+/commands/response", DeviceCommandHandler(command_repo, mqtt_client)
     # )
@@ -92,31 +92,17 @@ app.add_middleware(
 app.include_router(api_router, prefix=settings.API_PREFIX)
 
 
-from db.repository import (
-    DeviceRepository,
-    SensorReadingRepository,
-    DeviceCommandRepository,
-)
-
-
-def get_device_repository():
-    db = get_database()
-    return DeviceRepository(db)
-
-
-def get_sensor_reading_repository():
-    db = get_database()
-    return SensorReadingRepository(db)
-
-
-def get_command_repository():
-    db = get_database()
-    return DeviceCommandRepository(db)
-
-
 def signal_handler(sig, frame):
     logger.info(f"Received signal {sig}, shutting down...")
     sys.exit(0)
+
+from db.repository import (
+    GreenhouseRepository
+)
+
+def get_greenhouse_repo():
+    db = get_database()
+    return GreenhouseRepository(db)
 
 
 signal.signal(signal.SIGINT, signal_handler)
