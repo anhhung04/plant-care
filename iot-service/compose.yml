@@ -11,12 +11,6 @@ services:
       API_PREFIX: ${API_PREFIX:-/api/v1}
       DEBUG: ${DEBUG:-false}
 
-      # CORS settings
-      CORS_ORIGINS: ${CORS_ORIGINS:-*}
-      CORS_ALLOW_CREDENTIALS: ${CORS_ALLOW_CREDENTIALS:-true}
-      CORS_ALLOW_METHODS: ${CORS_ALLOW_METHODS:-*}
-      CORS_ALLOW_HEADERS: ${CORS_ALLOW_HEADERS:-*}
-
       # MongoDB settings
       MONGODB_URI: ${MONGODB_URI:-mongodb://iot-db:27017}
       MONGODB_DB_NAME: ${MONGODB_DB_NAME:-plant_care}

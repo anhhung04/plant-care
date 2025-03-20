@@ -10,4 +10,5 @@ dependencies = [
     "mongo>=0.2.0",
     "paho-mqtt>=2.1.0",
     "uvicorn>=0.34.0",
+    "pydantic-settings"
 ]

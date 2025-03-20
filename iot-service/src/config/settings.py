@@ -2,10 +2,10 @@
 
 import os
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Union
+from typing import List, Optional, Union
 
-from pydantic import AnyHttpUrl, BaseSettings, Field, PostgresDsn, validator
-
+from pydantic import Field, validator
+from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     """Application settings."""

@@ -1,9 +1,8 @@
 import logging
 import logging.config
 import sys
-from typing import Dict, Any
 
-from .settings import get_settings
+from config.settings import get_settings
 
 
 def configure_logging() -> None:
@@ -17,21 +16,12 @@ def configure_logging() -> None:
                 "format": settings.LOG_FORMAT,
                 "datefmt": "%Y-%m-%d %H:%M:%S",
             },
-            "json": {
-                "()": "pythonjsonlogger.jsonlogger.JsonFormatter",
-                "format": """
-                    asctime: %(asctime)s
-                    name: %(name)s
-                    levelname: %(levelname)s
-                    message: %(message)s
-                """,
-            },
         },
         "handlers": {
             "console": {
                 "class": "logging.StreamHandler",
                 "formatter": "default",
-                "stream": sys.stdout,
+                "stream": sys.stderr,
             },
             "file": {
                 "class": "logging.handlers.RotatingFileHandler",

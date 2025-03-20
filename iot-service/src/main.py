@@ -14,8 +14,6 @@ from config.logging_config import configure_logging
 from db.repository import get_database, close_database_connection
 from mqtt.client import MQTTClient
 from mqtt.handlers import (
-    DeviceCommandHandler,
-    DeviceStatusHandler,
     SensorReadingHandler,
 )
 
