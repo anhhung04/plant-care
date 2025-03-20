@@ -61,9 +61,17 @@ public class GreenHousesController {
         }
     }
 
-    //    @PostMapping("/unsubscribe")
-    //    public ApiResponse<String> unSub(@RequestBody List<SubGreenHouse> subGreenHouses) {
-    //    }
+    @MessageMapping("/unsubscribe")
+    public void unsubToGreenHouses(@RequestHeader("Authorization") String token,@RequestBody SubscribeRequest greenhouseIds) {
+        // realtime processing
+        try {
+            greenHousesService.unsubToGreenHouse(token,greenhouseIds);
+        }
+        catch(Exception e) {
+            log.error(e.getMessage());
+            throw new AppException(ErrorCode.SOCKET_NOT_CONNECTED);
+        }
+    }
 
     @PostMapping("/create")
     public ApiResponse<GreenHouseResponse> create(@RequestBody GreenHouseCreateRequest greenHouseCreateRequest) {

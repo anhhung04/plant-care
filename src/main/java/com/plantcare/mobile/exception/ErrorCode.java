@@ -17,7 +17,7 @@ public enum ErrorCode {
     UNAUTHORIZED("You do not have permission", HttpStatus.FORBIDDEN),
     INVALID_DOB("Your age must be at least {min}", HttpStatus.BAD_REQUEST),
     SOCKET_NOT_CONNECTED("Socket not connected", HttpStatus.SERVICE_UNAVAILABLE),
-    ;
+    CANNOT_UNSUB_SOCKET("Socket cannot remove", HttpStatus.CONFLICT);
 
     ErrorCode(String message, HttpStatusCode statusCode) {
         this.message = message;

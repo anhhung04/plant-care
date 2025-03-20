@@ -1,5 +1,8 @@
 package com.plantcare.mobile.clientsocket;
 
+import com.plantcare.mobile.exception.AppException;
+import com.plantcare.mobile.exception.ErrorCode;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
@@ -8,6 +11,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 
 @Component
+@Slf4j
 public class ClientSocketSessionRegistry {
     private final Set<UUID> connectedUsers = ConcurrentHashMap.newKeySet();
     private final Map<UUID, List<UUID>> gardenSubscriptions = new ConcurrentHashMap<>();
@@ -27,6 +31,19 @@ public class ClientSocketSessionRegistry {
     // Thêm userId vào danh sách sub greenhouseId
     public void subscribe(UUID userId, UUID greenhouseId) {
         gardenSubscriptions.computeIfAbsent(greenhouseId, k -> new CopyOnWriteArrayList<>()).add(userId);
+    }
+
+    // Unsub greenhouseID mà user đã theo dõi
+    public void unsubscribe(UUID userId, UUID greenhouseId) {
+
+        try {
+            gardenSubscriptions.get(greenhouseId).remove(userId);
+        }
+        catch (NullPointerException e) {
+            log.info(e.getMessage());
+            throw new AppException(ErrorCode.CANNOT_UNSUB_SOCKET);
+        }
+
     }
 
     // Unsub tất cả greenhouse mà user đang theo dõi

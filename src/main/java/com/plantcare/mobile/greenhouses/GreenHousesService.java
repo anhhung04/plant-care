@@ -96,5 +96,16 @@ public class GreenHousesService {
             log.info("Userid {} subscribed to greenhouse {}", userId, sub);
         }
     }
+    
+    public void unsubToGreenHouse(String token, SubscribeRequest unsubGreenHouses) {
+        token = token.substring(7);
+        log.info("token "+token);
+
+        UUID userId= UUID.fromString("c670e06e-afa8-4d4f-8005-b7bea9b38054");
+
+        for(UUID sub : unsubGreenHouses.getGreenhouseIds()) {
+            clientSocketSessionRegistry.unsubscribe(userId,sub);
+        }
+    }
 
 }
