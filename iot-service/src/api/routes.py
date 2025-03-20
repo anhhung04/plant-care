@@ -1,10 +1,10 @@
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import JSONResponse
+from uuid import uuid4
 
-from db.models import *
 from db.repository import GreenhouseRepository
 from db import get_database
 from mqtt.client import MQTTClient
@@ -41,7 +41,7 @@ async def create_greenhouse(
     """Create a new greenhouse."""
     try:
         greenhouse = Greenhouse(
-            greenhouse_id=f"gh_{datetime.utcnow().timestamp()}",  # Generate unique ID
+            greenhouse_id=f"gh_{uuid4().replace('-','')}",  # Generate unique ID
             name=request.name,
             location=request.location,
             owner=request.owner,

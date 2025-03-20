@@ -3,6 +3,7 @@
 import logging
 import signal
 import sys
+import re
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -21,7 +22,6 @@ configure_logging()
 logger = logging.getLogger(__name__)
 settings = get_settings()
 mqtt_client = None
-
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -51,9 +51,14 @@ async def lifespan(app: FastAPI):
     # device_repo = get_device_repository()
     reading_repo = get_greenhouse_repo()
     # command_repo = get_command_repository()
+    
+    class PatternMatchingHandler:
+        def __init__(self, base_handler, pattern):
+            self.base_handler = base_handler
+            self.pattern = re.compile(pattern)
 
     mqtt_client.register_handler(
-        settings.MQTT_USERNAME + "/groups/+/+/+", SensorReadingHandler(reading_repo)
+        settings.MQTT_USERNAME + "/groups/+/+", PatternMatchingHandler(SensorReadingHandler(reading_repo), r"^[\w-]+/groups/gh-[0-9a-f]+/\d+-\w+$")
     )
     # mqtt_client.register_handler(
     #     "devices/+/commands/response", DeviceCommandHandler(command_repo, mqtt_client)

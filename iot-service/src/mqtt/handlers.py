@@ -36,13 +36,12 @@ class SensorReadingHandler(BaseHandler):
         """
         try:
             parts = topic.split("/")
-            if len(parts) != 5 or parts[1] != "groups":
-                raise ValueError(f"Invalid topic format: {topic}")
 
             username = parts[0]
             greenhouse_id = parts[2]
-            field_index = int(parts[3])
-            sensor_type = parts[4]
+            greenhouse_id = greenhouse_id.replace("-","_")
+            field_index, sensor_type = parts[3].split("-")
+            field_index = int(field_index)
 
             return username, greenhouse_id, field_index, sensor_type
 
