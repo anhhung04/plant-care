@@ -1,6 +1,5 @@
 package com.plantcare.mobile.greenhouses;
 
-import java.util.List;
 import java.util.UUID;
 
 import com.plantcare.mobile.exception.AppException;
@@ -22,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequestMapping("/greenhouses")
 @RequiredArgsConstructor
 @Slf4j
-public class GreenHousesController {
+public class GreenHousesControllerHTTPs {
     private final GreenHousesService greenHousesService;
 
     @GetMapping()
@@ -46,31 +45,6 @@ public class GreenHousesController {
                 .message("update greenhouse successful")
                 .success(true)
                 .build();
-    }
-
-
-    @MessageMapping("/subscribe")
-    public void subToGreenHouses(@RequestHeader("Authorization") String token,@RequestBody SubscribeRequest greenhouseIds) {
-        // realtime processing
-        try {
-            greenHousesService.subToGreenHouses(token,greenhouseIds);
-        }
-        catch(Exception e) {
-            log.error(e.getMessage());
-            throw new AppException(ErrorCode.SOCKET_NOT_CONNECTED);
-        }
-    }
-
-    @MessageMapping("/unsubscribe")
-    public void unsubToGreenHouses(@RequestHeader("Authorization") String token,@RequestBody SubscribeRequest greenhouseIds) {
-        // realtime processing
-        try {
-            greenHousesService.unsubToGreenHouse(token,greenhouseIds);
-        }
-        catch(Exception e) {
-            log.error(e.getMessage());
-            throw new AppException(ErrorCode.SOCKET_NOT_CONNECTED);
-        }
     }
 
     @PostMapping("/create")

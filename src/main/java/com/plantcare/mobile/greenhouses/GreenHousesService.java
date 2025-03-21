@@ -76,10 +76,17 @@ public class GreenHousesService {
         // 🔹 Gửi dữ liệu WebSocket đến từng user đang subscribe
         for (UUID userId : subscribers) {
             log.info("userID sub " + userId);
-            messagingTemplate.convertAndSend("/user/" + userId + "/queue/greenhouse", response);
-            log.info("/user/" + userId + "/queue/greenhouse"+response);
-        }
+            try{
+                messagingTemplate.convertAndSend("/queue/greenhouse/"+userId.toString(), response);
+                log.info("a");
+            }
+            catch (Exception e){
+                log.info(e.getMessage());
+            }
+            log.info(response.toString());
+            log.info("urlsend: /" + userId + "/queue/greenhouse");
 
+        }
         return response;
     }
 
