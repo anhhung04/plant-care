@@ -1,7 +1,7 @@
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 CREATE TABLE IF NOT EXISTS greenhouses (
-    greenhouse_id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    greenhouse_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     user_id       VARCHAR(50),
     name          VARCHAR(255) NOT NULL,
     location      VARCHAR(255),
@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS greenhouses (
 );
 
 CREATE TABLE IF NOT EXISTS gardens (
-    garden_id  UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    garden_id  UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     name       VARCHAR(255),
     land_area  NUMERIC(10, 2)
 );
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS greenhouse_garden (
 );
 
 CREATE TABLE IF NOT EXISTS sensors (
-    sensor_id     UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    sensor_id     UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     greenhouse_id UUID NOT NULL,
     type          VARCHAR(50) NOT NULL,
     max_threshold DOUBLE PRECISION,
@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS sensors (
 );
 
 CREATE TABLE IF NOT EXISTS alerts (
-    alert_id   UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+    alert_id   UUID DEFAULT gen_random_uuid() PRIMARY KEY,
     sensor_id  UUID NOT NULL,
     message    TEXT,
     status     VARCHAR(50),
