@@ -39,6 +39,7 @@ def close_database_connection() -> None:
         _mongo_client.close()
         logger.info("MongoDB connection closed")
 
+
 class GreenhouseRepository:
     def __init__(self, database: Database):
         self.db = database
@@ -52,70 +53,69 @@ class GreenhouseRepository:
         value: float,
         unit: str,
         timestamp: datetime,
-        username: str
+        username: str,
     ) -> bool:
         try:
             sensor_data = SensorData(
-                value=value,
-                unit=unit,
-                timestamp=timestamp
+                value=value, unit=unit, timestamp=timestamp
             ).model_dump()
 
             result = self.collection.update_one(
                 {
                     "greenhouse_id": greenhouse_id,
-                    "fields": {"$exists": True},
-                    f"fields.{field_index}": {"$exists": True}
+                    f"fields.{field_index}": {"$exists": True},
                 },
                 {
-                    "$set": {
+                    "$push": {
                         f"fields.{field_index}.{sensor_type}": sensor_data,
-                        "updated_at": datetime.utcnow()
+                        "updated_at": datetime.utcnow(),
+                        "$position": 0,
                     }
-                }
+                },
             )
 
             if result.matched_count == 0:
                 greenhouse = self.get_greenhouse(greenhouse_id)
-                
+
                 if greenhouse:
-                    fields = greenhouse.fields
-                    while len(fields) <= field_index:
-                        fields.append(GreenhouseField())
-                    
-                    fields[field_index] = GreenhouseField(
-                        **{sensor_type: SensorData(
-                            value=value,
-                            unit=unit,
-                            timestamp=timestamp
-                        )}
-                    )
+                    while len(greenhouse.fields) <= field_index:
+                        greenhouse.fields.append(GreenhouseField())
 
                     result = self.collection.update_one(
                         {"greenhouse_id": greenhouse_id},
                         {
                             "$set": {
-                                "fields": [field.model_dump() for field in fields],
-                                "updated_at": datetime.utcnow()
+                                f"fields.{field_index}": GreenhouseField(
+                                    **{
+                                        sensor_type: [
+                                            SensorData(
+                                                value=value,
+                                                unit=unit,
+                                                timestamp=timestamp,
+                                            )
+                                        ]
+                                    }
+                                ).model_dump(),
+                                "updated_at": datetime.utcnow(),
                             }
-                        }
+                        },
                     )
                 else:
                     fields = [GreenhouseField() for _ in range(field_index + 1)]
                     fields[field_index] = GreenhouseField(
-                        **{sensor_type: SensorData(
-                            value=value,
-                            unit=unit,
-                            timestamp=timestamp
-                        )}
+                        **{
+                            sensor_type: [
+                                SensorData(value=value, unit=unit, timestamp=timestamp)
+                            ]
+                        }
                     )
-                    
+
                     greenhouse = Greenhouse(
                         greenhouse_id=greenhouse_id,
                         location="Unknown",
                         name=f"Greenhouse {greenhouse_id}",
                         owner=username,
-                        fields=fields
+                        fields=fields,
                     )
                     self.create_greenhouse(greenhouse)
 

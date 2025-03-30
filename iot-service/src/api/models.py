@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field
 from db.models import *
 
+
 class CreateGreenhouseRequest(BaseModel):
     name: str
     location: str
@@ -28,5 +29,5 @@ class GreenhouseResponse(BaseModel):
 
 class FieldResponse(BaseModel):
     field_index: int
-    sensors: Dict[str, Optional[SensorData]]
+    sensors: Dict[str, List[SensorData]]
     metadata: Dict[str, Any]
