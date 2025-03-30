@@ -82,10 +82,6 @@ class Greenhouse(BaseModel):
         ...,
         description="Name of the greenhouse"
     )
-    owner: str = Field(
-        ...,
-        description="Username of the greenhouse owner"
-    )
     fields: List[GreenhouseField] = Field(
         default_factory=list,
         description="List of greenhouse fields with their sensor data"

@@ -5,7 +5,6 @@ from typing import Any, Dict, List, Optional, Union
 from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
-from pydantic import BaseModel
 
 from .models import *
 
@@ -27,14 +26,6 @@ def get_database(
             _mongo_client.admin.command("ping")
             _database = _mongo_client[db_name]
             logger.info(f"Connected to MongoDB database: {db_name}")
-
-            _database.devices.create_index("device_id", unique=True)
-            _database.sensor_readings.create_index("device_id")
-            _database.sensor_readings.create_index("timestamp")
-            _database.device_commands.create_index(
-                [("device_id", 1), ("timestamp", -1)]
-            )
-
         except (ConnectionFailure, ServerSelectionTimeoutError) as e:
             logger.error(f"Failed to connect to MongoDB: {e}")
             raise
@@ -73,6 +64,7 @@ class GreenhouseRepository:
             result = self.collection.update_one(
                 {
                     "greenhouse_id": greenhouse_id,
+                    "fields": {"$exists": True},
                     f"fields.{field_index}": {"$exists": True}
                 },
                 {
@@ -87,20 +79,23 @@ class GreenhouseRepository:
                 greenhouse = self.get_greenhouse(greenhouse_id)
                 
                 if greenhouse:
-                    while len(greenhouse.fields) <= field_index:
-                        greenhouse.fields.append(GreenhouseField())
+                    fields = greenhouse.fields
+                    while len(fields) <= field_index:
+                        fields.append(GreenhouseField())
                     
+                    fields[field_index] = GreenhouseField(
+                        **{sensor_type: SensorData(
+                            value=value,
+                            unit=unit,
+                            timestamp=timestamp
+                        )}
+                    )
+
                     result = self.collection.update_one(
                         {"greenhouse_id": greenhouse_id},
                         {
                             "$set": {
-                                f"fields.{field_index}": GreenhouseField(
-                                    **{sensor_type: SensorData(
-                                        value=value,
-                                        unit=unit,
-                                        timestamp=timestamp
-                                    )}
-                                ).model_dump(),
+                                "fields": [field.model_dump() for field in fields],
                                 "updated_at": datetime.utcnow()
                             }
                         }

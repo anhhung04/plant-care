@@ -41,7 +41,7 @@ async def create_greenhouse(
     """Create a new greenhouse."""
     try:
         greenhouse = Greenhouse(
-            greenhouse_id=f"gh_{uuid4().replace('-','')}",  # Generate unique ID
+            greenhouse_id=f"gh_{str(uuid4()).replace('-','')}",  # Generate unique ID
             name=request.name,
             location=request.location,
             owner=request.owner,

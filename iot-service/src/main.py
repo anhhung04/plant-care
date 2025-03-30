@@ -51,14 +51,9 @@ async def lifespan(app: FastAPI):
     # device_repo = get_device_repository()
     reading_repo = get_greenhouse_repo()
     # command_repo = get_command_repository()
-    
-    class PatternMatchingHandler:
-        def __init__(self, base_handler, pattern):
-            self.base_handler = base_handler
-            self.pattern = re.compile(pattern)
 
     mqtt_client.register_handler(
-        settings.MQTT_USERNAME + "/groups/+/+", PatternMatchingHandler(SensorReadingHandler(reading_repo), r"^[\w-]+/groups/gh-[0-9a-f]+/\d+-\w+$")
+        settings.MQTT_USERNAME + "/groups/+/+", SensorReadingHandler(reading_repo)
     )
     # mqtt_client.register_handler(
     #     "devices/+/commands/response", DeviceCommandHandler(command_repo, mqtt_client)
