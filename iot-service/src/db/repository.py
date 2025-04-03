@@ -128,9 +128,13 @@ class GreenhouseRepository:
             return False
 
     def get_greenhouse(self, greenhouse_id: str) -> Optional[Greenhouse]:
+        try:
+            object_id = ObjectId(greenhouse_id)
+        except Exception:
+            object_id = None
         greenhouse_dict = self.collection.find_one({
             "$or": [
-                {"greenhouse_id": greenhouse_id}, {"_id": ObjectId(greenhouse_id)}
+                {"greenhouse_id": greenhouse_id}, {"_id": object_id}
             ]
         })
         if greenhouse_dict:
@@ -141,7 +145,33 @@ class GreenhouseRepository:
         greenhouse_dict = greenhouse.model_dump()
         result = self.collection.insert_one(greenhouse_dict)
         return str(result.inserted_id)
+    
+    def delete_greenhouse(self, greenhouse_id: str) -> bool:
+        try:
+            result = self.collection.delete_one({"greenhouse_id": greenhouse_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error deleting greenhouse: {e}")
+            return False
+    
+    def delete_field(self, greenhouse_id: str, field_index: int) -> bool:
+        try:
+            result = self.collection.update_one(
+                {"greenhouse_id": greenhouse_id},
+                {"$unset": {f"fields.{field_index}": ""}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error deleting field: {e}")
+            return False
 
-    def get_all_greenhouses(self) -> List[Greenhouse]:
-        cursor = self.collection.find()
+    def get_all_greenhouses(self, owner, location, offset, limit) -> List[Greenhouse]:
+        filter_obj = {}
+        if owner:
+            filter_obj["owner"] = owner
+        if location:
+            filter_obj["location"] = location
+        cursor = self.collection.find(filter_obj).sort("updated_at", -1).skip(offset).limit(limit)
+        if cursor is None:
+            return []
         return [Greenhouse(**gh_dict) for gh_dict in cursor]

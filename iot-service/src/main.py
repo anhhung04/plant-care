@@ -116,7 +116,7 @@ if __name__ == "__main__":
         f"Starting IoT Service in {'debug' if settings.DEBUG else 'production'} mode"
     )
     uvicorn.run(
-        "app:app",
+        "main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.DEBUG,

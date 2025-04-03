@@ -59,9 +59,9 @@ class GreenhouseField(BaseModel):
 
 class Greenhouse(BaseModel):
     greenhouse_id: str = Field(..., description="Unique identifier for the greenhouse")
-    location: str = Field(..., description="Physical location of the greenhouse")
+    location: str = Field(default="vietnam", description="Physical location of the greenhouse")
     name: str = Field(..., description="Name of the greenhouse")
-    owner: str = Field(..., description="Username of the greenhouse owner")
+    owner: str = Field(default="guest", description="Username of the greenhouse owner")
     fields: List[GreenhouseField] = Field(
         default_factory=list,
         description="List of greenhouse fields with their sensor data",
