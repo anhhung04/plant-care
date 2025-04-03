@@ -27,12 +27,12 @@ def get_mqtt_client():
     settings = get_settings()
 
     client = MQTTClient(
-        client_id=settings.mqtt_client_id,
-        host=settings.mqtt_host,
-        port=settings.mqtt_port,
-        username=settings.mqtt_username,
-        password=settings.mqtt_password,
-        use_tls=settings.mqtt_use_tls,
+        client_id=settings.MQTT_CLIENT_ID,
+        host=settings.MQTT_HOST,
+        port=settings.MQTT_PORT,
+        username=settings.MQTT_USERNAME,
+        password=settings.MQTT_PASSWORD,
+        use_tls=settings.MQTT_USE_TLS,
     )
     return client
 
@@ -52,8 +52,8 @@ async def create_greenhouse(
             metadata=request.metadata,
         )
 
-        greenhouse_id = repo.create_greenhouse(greenhouse)
-        created_greenhouse = repo.get_greenhouse(greenhouse_id)
+        greenhouse_object_id = repo.create_greenhouse(greenhouse)
+        created_greenhouse = repo.get_greenhouse(greenhouse_object_id)
 
         if not created_greenhouse:
             raise HTTPException(

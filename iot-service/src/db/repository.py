@@ -6,6 +6,8 @@ from pymongo import MongoClient
 from pymongo.database import Database
 from pymongo.errors import ConnectionFailure, ServerSelectionTimeoutError
 
+from bson.objectid import ObjectId
+
 from .models import *
 
 logger = logging.getLogger(__name__)
@@ -126,7 +128,11 @@ class GreenhouseRepository:
             return False
 
     def get_greenhouse(self, greenhouse_id: str) -> Optional[Greenhouse]:
-        greenhouse_dict = self.collection.find_one({"greenhouse_id": greenhouse_id})
+        greenhouse_dict = self.collection.find_one({
+            "$or": [
+                {"greenhouse_id": greenhouse_id}, {"_id": ObjectId(greenhouse_id)}
+            ]
+        })
         if greenhouse_dict:
             return Greenhouse(**greenhouse_dict)
         return None
