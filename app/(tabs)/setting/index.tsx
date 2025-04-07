@@ -1,0 +1,214 @@
+import React, { useState, useEffect } from "react";
+import SettingsIcon from "@/assets/icons/setting-fill-22.svg";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  Image,
+  TouchableOpacity,
+  SafeAreaView,
+} from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useRouter } from "expo-router";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiCall } from "@/src/utils/apiCall";
+import settingsMockData from "@/src/data/settings.mock.json";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { SettingStackParamList } from "../_layout";
+
+interface DeviceType {
+  id: number;
+  name: string;
+  mode: string;
+  status: boolean;
+  intensity: number;
+}
+
+const devicesImage = {
+  led: require("@/assets/images/led.png"),
+  fan: require("@/assets/images/fan.png"),
+  pump: require("@/assets/images/pump.png"),
+};
+
+const deviceName = {
+  led: "Đèn Led",
+  fan: "Quạt",
+  pump: "Bơm Nước",
+};
+
+const CardDevice: React.FC<DeviceType> = ({
+  id,
+  name,
+  mode,
+  status,
+  intensity,
+}) => {
+  const router = useRouter();
+  const [updateStatus, setUpdateStatus] = useState(status);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<SettingStackParamList>>();
+
+  const toggleSwitch = () => {
+    setUpdateStatus((prev) => !prev);
+    saveSettingsMutation.mutate();
+  };
+
+  const saveSettingsMutation = useMutation({
+    mutationFn: async () => {
+      return apiCall({
+        endpoint: `/settings/${name}/status`,
+        method: "PUT",
+        body: {
+          status: !updateStatus,
+        },
+      });
+    },
+    onError: (error) => {
+      setUpdateStatus((prev) => !prev);
+      console.error("Error saving settings:", error);
+    },
+  });
+
+  return (
+    <View style={styles.card}>
+      <View style={styles.LeftSection}>
+        <Image
+          source={devicesImage[name as keyof typeof devicesImage]}
+          style={styles.icon}
+        />
+        <View style={styles.info}>
+          <Text style={styles.name}>
+            {deviceName[name as keyof typeof deviceName]}
+          </Text>
+          <View style={styles.ButtonRow}>
+            <Text style={styles.label}>Trạng thái:</Text>
+            <Switch
+              value={updateStatus}
+              onValueChange={toggleSwitch}
+              trackColor={{ false: "#ccc", true: "#ffa500" }}
+              thumbColor="#fff"
+            />
+          </View>
+          <Text style={styles.label}>Cường độ: {intensity}%</Text>
+        </View>
+      </View>
+      <View style={styles.ControlSection}>
+        <Text style={styles.mode}>{mode}</Text>
+        <TouchableOpacity
+          style={styles.iconButton}
+          onPress={() =>
+            navigation.navigate("ConfigScreen", { device_name: name })
+          }
+        >
+          <SettingsIcon width={22} height={22} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
+
+export default function SettingTab() {
+  const insets = useSafeAreaInsets();
+  const [deviceList, setDeviceList] = useState<DeviceType[]>(settingsMockData);
+
+  const {
+    data: settings,
+    isSuccess,
+    isError,
+  } = useQuery<any>({
+    queryKey: ["settings"],
+    queryFn: () => apiCall({ endpoint: `/settings` }),
+  });
+
+  useEffect(() => {
+    if (isSuccess) {
+      setDeviceList(settings);
+    }
+  }, [isSuccess]);
+
+  return (
+    <SafeAreaView
+      style={{
+        ...styles.container,
+        paddingTop: insets.top + 20,
+        paddingBottom: insets.bottom,
+      }}
+    >
+      {deviceList.map((device: DeviceType, index: number) => (
+        <CardDevice key={index} {...device} />
+      ))}
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#ecffe1",
+    paddingHorizontal: 20,
+    alignItems: "center",
+    gap: 20,
+  },
+  card: {
+    flexDirection: "row",
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 16,
+    justifyContent: "space-between",
+    elevation: 4,
+    height: 152,
+    width: "100%",
+    gap: 12,
+  },
+  icon: {
+    width: 82,
+    height: 82,
+    resizeMode: "contain",
+  },
+  info: {
+    flexDirection: "column",
+  },
+
+  name: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  mode: {
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+  ButtonRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+  },
+  ControlSection: {
+    flexDirection: "column",
+    justifyContent: "space-between",
+    alignItems: "flex-end",
+  },
+  label: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  LeftSection: {
+    gap: 12,
+    flexDirection: "row",
+  },
+  iconButton: {
+    backgroundColor: "#00712D",
+    padding: 4,
+    borderRadius: 8,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    height: 30,
+    width: 30,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+});
