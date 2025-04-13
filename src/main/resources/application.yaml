@@ -26,3 +26,5 @@ spring:
     show-sql: true
     hibernate:
       ddl-auto: update
+security:
+  prepared-key: ${SECURITY_PREPARE_KEY}

@@ -12,6 +12,7 @@ import com.plantcare.mobile.greenhouses.dto.request.GreenHouseDataServiceCreateR
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
 import com.plantcare.mobile.greenhouses.feignclient.GreenHousesHTTPsDataService;
 import org.apache.logging.log4j.util.Supplier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,10 +30,13 @@ import lombok.extern.slf4j.Slf4j;
 public class GreenHousesControllerHTTPs {
     private final GreenHousesService greenHousesService;
     private GreenHousesHTTPsDataService greenHousesHTTPsDataService;
+    @Value("${security.prepared-key}")
+    private String presharedKey;
 
-    public GreenHousesControllerHTTPs(GreenHousesService greenHousesService, GreenHousesHTTPsDataService greenHousesHTTPsDataService) {
+    public GreenHousesControllerHTTPs(GreenHousesService greenHousesService, GreenHousesHTTPsDataService greenHousesHTTPsDataService)  {
         this.greenHousesService = greenHousesService;
         this.greenHousesHTTPsDataService = greenHousesHTTPsDataService;
+
     }
 
     @GetMapping()
@@ -46,8 +50,14 @@ public class GreenHousesControllerHTTPs {
         );
     }
 
-    @PatchMapping("/update/{greenhouses_id}")
-    public ApiResponse<GreenHouseResponse> updateGreenHouses(@PathVariable String greenhouses_id) {
+    @GetMapping("/update/{greenhouses_id}")
+    public ApiResponse<GreenHouseResponse> updateGreenHouses(
+            @RequestHeader("X-Auth-Key") String authKey,
+            @PathVariable String greenhouses_id) {
+        if (!authKey.equals(presharedKey)) {
+            log.info("update greenhouses failed, auth key not match: {}", authKey);
+            throw new AppException(ErrorCode.UNAUTHORIZED);
+        }
         return buildResponse(
                 greenHousesService.updateGreenHouses(greenhouses_id),
                 "update greenhouses successful"

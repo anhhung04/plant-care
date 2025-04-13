@@ -42,6 +42,7 @@ public class ScheduledTaskService {
     public void executeScheduledTasks() {
         List<ScheduledTask> tasks = scheduledTaskRepository.findByExecutedFalseAndScheduledTimeBefore(LocalDateTime.now());
         for (ScheduledTask task : tasks) {
+
             try {
                 greenHousesHTTPsDataService.controlFieldDevice(
                         task.getGreenhouseId(),
