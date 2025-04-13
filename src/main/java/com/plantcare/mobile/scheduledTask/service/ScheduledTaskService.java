@@ -42,8 +42,13 @@ public class ScheduledTaskService {
     public void executeScheduledTasks() {
         List<ScheduledTask> tasks = scheduledTaskRepository.findByExecutedFalseAndScheduledTimeBefore(LocalDateTime.now());
         for (ScheduledTask task : tasks) {
-
             try {
+                // Check xem có quá 20 phút sau thời gian thực hiện không
+                if (task.getScheduledTime().plusMinutes(20).isBefore(LocalDateTime.now())) {
+                    log.warn("Task {} is too old and will not be executed", task);
+                    continue;
+                }
+                // Gọi dịch vụ HTTP để điều khiển thiết bị
                 greenHousesHTTPsDataService.controlFieldDevice(
                         task.getGreenhouseId(),
                         task.getFieldIndex(),
