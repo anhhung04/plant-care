@@ -2,16 +2,16 @@ package com.plantcare.mobile.greenhouses.dto.request;
 
 import lombok.*;
 
+import java.lang.reflect.Array;
+
 @Data
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class GreenHouseCreateRequest {
-    private String greenhouseId;
-    private String userId;
+public class GreenHouseDataServiceCreateRequest {
     private String name;
     private String location;
-    private Boolean status;
-    private String description;
+    private String owner;
+    private Object metadata;
 }

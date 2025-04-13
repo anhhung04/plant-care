@@ -23,7 +23,7 @@ public class SensorSupabase {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "sensor_id", updatable = false, nullable = false)
-    private UUID sensorId;
+    private String sensorId;
 
     @ManyToOne
     @JoinColumn(

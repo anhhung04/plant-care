@@ -23,7 +23,7 @@ public class Alert {
     @GeneratedValue(generator = "UUID")
     @GenericGenerator(name = "UUID", strategy = "org.hibernate.id.UUIDGenerator")
     @Column(name = "alert_id", updatable = false, nullable = false)
-    private UUID alertId;
+    private String alertId;
 
     @ManyToOne
     @JoinColumn(

@@ -11,8 +11,8 @@ import com.plantcare.mobile.greenhouses.dto.response.GreenHouseResponse;
 import com.plantcare.mobile.greenhouses.entity.GreenHouses;
 
 @Repository
-public interface GreenHousesRepository extends JpaRepository<GreenHouses, UUID> {
+public interface GreenHousesRepository extends JpaRepository<GreenHouses, String> {
     Page<GreenHouses> findAllByName(String name, Pageable pageable);
 
-    GreenHouseResponse findByGreenhouseId(UUID greenhousesId);
+    GreenHouseResponse findByGreenhouseId(String greenhousesId);
 }

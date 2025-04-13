@@ -25,7 +25,7 @@ public class WebSocketEventListener {
             token = token.substring(7);
             //O day minh se pass token vao userId nha, gio chua co detail cua token nen tam thoi de random nhe'
 //            UUID userId = UUID.fromString(token);
-            UUID userId= UUID.fromString("c670e06e-afa8-4d4f-8005-b7bea9b38054");
+            String userId= "c670e06e-afa8-4d4f-8005-b7bea9b38054";
             clientSocketSessionRegistry.addConnectedUser(userId);
             System.out.println("User connected: " + userId);
         }
@@ -40,7 +40,7 @@ public class WebSocketEventListener {
             token = token.substring(7);
             //O day minh se pass token vao userId nha, gio chua co detail cua token nen tam thoi de random nhe'
 //            UUID userId = UUID.fromString(token);
-            UUID userId= UUID.fromString("c670e06e-afa8-4d4f-8005-b7bea9b38054");
+            String userId= "c670e06e-afa8-4d4f-8005-b7bea9b38054";
             clientSocketSessionRegistry.removeConnectedUser(userId);
             System.out.println("User disconnected: " + userId);
         }

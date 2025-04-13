@@ -8,4 +8,4 @@ import org.springframework.stereotype.Repository;
 import com.plantcare.mobile.sensorsupabase.entity.SensorSupabase;
 
 @Repository
-public interface SensorSupabaseRepository extends JpaRepository<SensorSupabase, UUID> {}
+public interface SensorSupabaseRepository extends JpaRepository<SensorSupabase, String> {}

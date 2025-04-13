@@ -14,6 +14,6 @@ import lombok.*;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class GreenhouseGardenId implements Serializable {
-    private UUID greenhouseId;
-    private UUID gardenId;
+    private String greenhouseId;
+    private String gardenId;
 }

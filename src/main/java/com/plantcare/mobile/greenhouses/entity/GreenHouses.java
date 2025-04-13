@@ -19,16 +19,15 @@ import lombok.Setter;
 public class GreenHouses {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "greenhouse_id")
-    private UUID greenhouseId;
+    private String greenhouseId;
 
     @Column(name = "user_id", nullable = false)
     private String userId;
 
     private String name;
     private String location;
-    private Boolean status;
+    private String status;
     private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)

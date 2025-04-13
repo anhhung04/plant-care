@@ -18,7 +18,7 @@ spring:
   #      uri: mongodb+srv://hothanhnha25062004:hF09yiWZJHw5j4nx@cluster0.zw8ek.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGUSER}
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
     username: ${PGUSER}
     password: ${PGPASSWORD}
 

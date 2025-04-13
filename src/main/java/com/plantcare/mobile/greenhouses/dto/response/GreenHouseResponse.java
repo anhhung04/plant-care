@@ -11,7 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GreenHouseResponse {
-    private UUID greenhouseId;
+    private String greenhouseId;
 
     private String userId;
     private String name;

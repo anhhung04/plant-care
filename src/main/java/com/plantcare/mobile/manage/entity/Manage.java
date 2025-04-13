@@ -21,7 +21,7 @@ public class Manage {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+    private String id;
 
     @ManyToOne
     @JoinColumn(
@@ -34,5 +34,5 @@ public class Manage {
                                     "FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(greenhouse_id) ON DELETE CASCADE"))
     private GreenHouses greenhouses;
 
-    private UUID userId;
+    private String userId;
 }

@@ -1,22 +1,16 @@
-package com.plantcare.mobile.greenhouses;
+package com.plantcare.mobile.greenhouses.controller;
 
-import com.plantcare.mobile.dtoGlobal.response.ApiResponse;
 import com.plantcare.mobile.exception.AppException;
 import com.plantcare.mobile.exception.ErrorCode;
-import com.plantcare.mobile.greenhouses.dto.request.GreenHouseCreateRequest;
+import com.plantcare.mobile.greenhouses.service.GreenHousesService;
 import com.plantcare.mobile.greenhouses.dto.request.SubscribeRequest;
-import com.plantcare.mobile.greenhouses.dto.response.GreenHouseResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.UUID;
 
 @Controller
 @RequiredArgsConstructor

@@ -1,5 +1,6 @@
 package com.plantcare.mobile.sensor.entities;
 
+
 public class Sensor {
     private String id;
     private String name;

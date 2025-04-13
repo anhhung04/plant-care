@@ -4,9 +4,11 @@ import io.github.cdimascio.dotenv.Dotenv;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.web.context.WebServerInitializedEvent;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.ApplicationListener;
 
 @SpringBootApplication
+@EnableFeignClients(basePackages = "com.plantcare.mobile.greenhouses")
 public class MobileApplication {
     public static void main(String[] args) {
         Dotenv dotenv= Dotenv.load();

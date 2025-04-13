@@ -1,9 +1,8 @@
-package com.plantcare.mobile.greenhouses;
+package com.plantcare.mobile.greenhouses.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.UUID;
 
 import com.plantcare.mobile.clientsocket.ClientSocketSessionRegistry;
 import com.plantcare.mobile.greenhouses.dto.request.SubscribeRequest;
@@ -48,7 +47,7 @@ public class GreenHousesService {
     public GreenHouseResponse createGreenHouse(GreenHouseCreateRequest greenHouseCreateRequest) {
         GreenHouses greenHouses = greenHouseMapper.toGreenHouses(greenHouseCreateRequest);
         // O day minh se truyen userid tao tu jwt, nma bay gio chua co
-        greenHouses.setUserId("Tamthoichuaco");
+
         greenHouses.setCreatedAt(LocalDateTime.now());
         return greenHouseMapper.toGreenHouseResponse(greenHousesRepository.save(greenHouses));
     }
@@ -61,7 +60,7 @@ public class GreenHousesService {
         return greenHousesRepository.findAll(pageable).map(greenHouseMapper::toGreenHouseResponse);
     }
 
-    public GreenHouseResponse updateGreenHouses(UUID greenhouseId) {
+    public GreenHouseResponse updateGreenHouses(String greenhouseId) {
         GreenHouses greenHouse = greenHousesRepository
                 .findById(greenhouseId)
                 .orElseThrow(() -> new RuntimeException("Greenhouse not found"));
@@ -71,10 +70,10 @@ public class GreenHousesService {
         GreenHouseResponse response = greenHouseMapper.toGreenHouseResponse(greenHousesRepository.save(greenHouse));
 
         // 🔹 Lấy danh sách user đang subscribe greenhouseId này
-        List<UUID> subscribers = clientSocketSessionRegistry.getSubscribers(greenhouseId);
+        List<String> subscribers = clientSocketSessionRegistry.getSubscribers(greenhouseId);
         log.info("subscribers: {}", subscribers);
         // 🔹 Gửi dữ liệu WebSocket đến từng user đang subscribe
-        for (UUID userId : subscribers) {
+        for (String userId : subscribers) {
             log.info("userID sub " + userId);
             try{
                 messagingTemplate.convertAndSend("/queue/greenhouse/"+userId.toString(), response);
@@ -95,11 +94,11 @@ public class GreenHousesService {
 
         log.info("token "+token);
 
-        UUID userId= UUID.fromString("c670e06e-afa8-4d4f-8005-b7bea9b38054");
+        String userId= "c670e06e-afa8-4d4f-8005-b7bea9b38054";
 
         clientSocketSessionRegistry.unsubscribeAll(userId);
 
-        for (UUID sub : subGreenHouses.getGreenhouseIds()) {
+        for (String sub : subGreenHouses.getGreenhouseIds()) {
             clientSocketSessionRegistry.subscribe(userId,sub);
             log.info("Userid {} subscribed to greenhouse {}", userId, sub);
         }
@@ -109,9 +108,9 @@ public class GreenHousesService {
         token = token.substring(7);
         log.info("token "+token);
 
-        UUID userId= UUID.fromString("c670e06e-afa8-4d4f-8005-b7bea9b38054");
+        String userId= "c670e06e-afa8-4d4f-8005-b7bea9b38054";
 
-        for(UUID sub : unsubGreenHouses.getGreenhouseIds()) {
+        for(String sub : unsubGreenHouses.getGreenhouseIds()) {
             clientSocketSessionRegistry.unsubscribe(userId,sub);
         }
     }

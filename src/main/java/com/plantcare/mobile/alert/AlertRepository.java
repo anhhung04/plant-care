@@ -8,4 +8,4 @@ import org.springframework.stereotype.Repository;
 import com.plantcare.mobile.alert.entity.Alert;
 
 @Repository
-public interface AlertRepository extends JpaRepository<Alert, UUID> {}
+public interface AlertRepository extends JpaRepository<Alert, String> {}

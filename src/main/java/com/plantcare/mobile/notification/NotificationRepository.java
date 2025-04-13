@@ -9,6 +9,6 @@ import org.springframework.stereotype.Repository;
 import com.plantcare.mobile.notification.entity.Notification;
 
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, UUID> {
+public interface NotificationRepository extends JpaRepository<Notification, String> {
     List<Notification> findByUserId(String userId);
 }

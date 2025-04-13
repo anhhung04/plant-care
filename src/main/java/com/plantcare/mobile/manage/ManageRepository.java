@@ -8,4 +8,4 @@ import org.springframework.stereotype.Repository;
 import com.plantcare.mobile.gardens.entity.Gardens;
 
 @Repository
-public interface ManageRepository extends JpaRepository<Gardens, UUID> {}
+public interface ManageRepository extends JpaRepository<Gardens, String> {}

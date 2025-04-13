@@ -6,14 +6,14 @@ import java.util.List;
 import java.util.UUID;
 
 public class SubscribeRequest {
-    @JsonDeserialize(contentAs = UUID.class)
-    private List<UUID> greenhouseIds;
+    @JsonDeserialize(contentAs = String.class)
+    private List<String> greenhouseIds;
 
-    public List<UUID> getGreenhouseIds() {
+    public List<String> getGreenhouseIds() {
         return greenhouseIds;
     }
 
-    public void setGreenhouseIds(List<UUID> greenhouseIds) {
+    public void setGreenhouseIds(List<String> greenhouseIds) {
         this.greenhouseIds = greenhouseIds;
     }
 }
