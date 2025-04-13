@@ -154,6 +154,46 @@ class GreenhouseRepository:
             logger.error(f"Error deleting greenhouse: {e}")
             return False
     
+    def add_field(self, greenhouse_id: str, field: GreenhouseField) -> bool:
+        try:
+            result = self.collection.update_one(
+                {"greenhouse_id": greenhouse_id},
+                {"$push": {"fields": field.model_dump()}}
+            )
+            field_index = len(self.collection.find_one({"greenhouse_id": greenhouse_id})["fields"]) - 1
+            return field_index
+        except Exception as e:
+            logger.error(f"Error adding field: {e}")
+            return None
+    
+    def get_sensor_history(self, greenhouse_id: str, field_index: int, sensor_type: str, start_time: datetime, end_time: datetime) -> List[SensorData]:
+        try:
+            greenhouse = self.get_greenhouse(greenhouse_id)
+            if not greenhouse or field_index >= len(greenhouse.fields):
+                return []
+
+            field = greenhouse.fields[field_index]
+            sensor_data_list = getattr(field, sensor_type, [])
+            filtered_data = [
+                data for data in sensor_data_list
+                if start_time <= data.timestamp <= end_time
+            ]
+            return filtered_data
+        except Exception as e:
+            logger.error(f"Error retrieving sensor history: {e}")
+            return []
+    
+    def update_field(self, greenhouse_id: str, field_index: int, field: GreenhouseField) -> bool:
+        try:
+            result = self.collection.update_one(
+                {"greenhouse_id": greenhouse_id},
+                {"$set": {f"fields.{field_index}": field.model_dump()}}
+            )
+            return result.modified_count > 0
+        except Exception as e:
+            logger.error(f"Error updating field: {e}")
+            return False
+    
     def delete_field(self, greenhouse_id: str, field_index: int) -> bool:
         try:
             result = self.collection.update_one(

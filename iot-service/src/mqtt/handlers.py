@@ -1,5 +1,6 @@
 import json
 import logging
+import requests
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
@@ -102,7 +103,7 @@ class SensorReadingHandler(BaseHandler):
                         username=username
                     )
 
-                    if success:
+                    if success and requests.get(f"http://backend:8080/mobileBE/greenhouses/update/" + greenhouse_id).status_code == 200:
                         logger.info(
                             f"Updated {sensor_type} reading for greenhouse {greenhouse_id} "
                             f"field {field_index}: {value} {unit}"

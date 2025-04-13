@@ -125,7 +125,7 @@ async def create_field(
 ):
     """Add a new field to a greenhouse."""
     try:
-        field = GreenhouseField(metadata=request.metadata)
+        field = GreenhouseField(metadata=request.metadata, temperature_sensor=[], humidity_sensor=[], soil_moisture_sensor=[], light_sensor=[], fan_status=[], led_status=[], pump_status=[])
         field_index = repo.add_field(greenhouse_id, field)
 
         if field_index is None:
@@ -170,7 +170,7 @@ async def list_fields(
             },
             metadata=field.metadata,
         )
-        for idx, field in enumerate(greenhouse.fields)
+        for idx, field in enumerate(greenhouse.fields) if greenhouse.fields
     ]
 
 
@@ -284,7 +284,7 @@ async def control_field_device(
         topic = f"{greenhouse_id}.{field_index}-{device}"
         payload = 1 if action == "on" else 0
 
-        success = await mqtt_client.publish(topic, payload)
+        success = mqtt_client.publish(topic, payload)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

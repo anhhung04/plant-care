@@ -19,7 +19,11 @@ services:
       - iot
     depends_on:
       - iot-db
-
+  backend:
+    build: ./mobile-core
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
 networks:
   iot:
     driver: bridge
