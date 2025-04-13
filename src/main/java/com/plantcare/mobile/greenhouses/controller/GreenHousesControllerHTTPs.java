@@ -11,6 +11,7 @@ import com.plantcare.mobile.greenhouses.service.GreenHousesService;
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseDataServiceCreateRequest;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
 import com.plantcare.mobile.greenhouses.feignclient.GreenHousesHTTPsDataService;
+import org.apache.logging.log4j.util.Supplier;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
@@ -39,74 +40,41 @@ public class GreenHousesControllerHTTPs {
             @RequestParam(defaultValue = "") String name,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        return ApiResponse.<Page<GreenHouseResponse>>builder()
-                .data(greenHousesService.getGreenHouse(name, page, size))
-                .status(HttpStatus.OK)
-                .message("get greenhouse successful")
-                .success(true)
-                .build();
+        return buildResponse(
+                greenHousesService.getGreenHouse(name, page, size),
+                "get greenhouses successful"
+        );
     }
 
     @PatchMapping("/update/{greenhouses_id}")
     public ApiResponse<GreenHouseResponse> updateGreenHouses(@PathVariable String greenhouses_id) {
-        return ApiResponse.<GreenHouseResponse>builder()
-                .data(greenHousesService.updateGreenHouses(greenhouses_id))
-                .status(HttpStatus.OK)
-                .message("update greenhouse successful")
-                .success(true)
-                .build();
+        return buildResponse(
+                greenHousesService.updateGreenHouses(greenhouses_id),
+                "update greenhouses successful"
+        );
     }
 
     @PostMapping("/create")
     public ApiResponse<GreenHouseResponse> create(@RequestBody GreenHouseCreateRequest greenHouseCreateRequest) {
-        return ApiResponse.<GreenHouseResponse>builder()
-                .data(greenHousesService.createGreenHouse(greenHouseCreateRequest))
-                .status(HttpStatus.OK)
-                .message("create greenhouse successful")
-                .success(true)
-                .build();
+        return buildResponse(
+                greenHousesService.createGreenHouse(greenHouseCreateRequest),
+                "create greenhouse successful"
+        );
     }
 
 
     @Transactional
     @PostMapping(value = "/ds-create", consumes = "application/json", produces = "application/json")
     public ApiResponse<GreenHouseResponse> createGreenhouse(@RequestBody GreenHouseDataServiceCreateRequest request) {
-        GreenHouseDataServiceResponse greenhouse;
-        try {
-             greenhouse = greenHousesHTTPsDataService.createGreenhouse(request);
-        }
-        catch (Exception e) {
-            log.error("create greenhouse failed, data service not response or error: {}", e.getMessage());
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        if (greenhouse == null) {
-            log.info(
-                    "create greenhouse failed, data service not response or error: {}",
-                    request
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        log.info(
-                "create greenhouse success, data service response: {}",
-                greenhouse
+        GreenHouseDataServiceResponse response = safeExecute(
+                () -> greenHousesHTTPsDataService.createGreenhouse(request),
+                "Create greenhouse failed"
         );
-        GreenHouseCreateRequest greenHouseCreateRequest = new GreenHouseCreateRequest();
-        greenHouseCreateRequest.setGreenhouseId(greenhouse.getGreenhouse_id());
-        greenHouseCreateRequest.setName(greenhouse.getName());
-        greenHouseCreateRequest.setLocation(greenhouse.getLocation());
-        greenHouseCreateRequest.setStatus(true);
-        greenHouseCreateRequest.setDescription(greenhouse.getOwner());
-        greenHouseCreateRequest.setUserId(greenhouse.getOwner());
-        log.info(
-                "create greenhouse success, data service response: {}",
-                greenHouseCreateRequest
+        GreenHouseCreateRequest createRequest = mapToCreateRequest(response);
+        return buildResponse(
+                greenHousesService.createGreenHouse(createRequest),
+                "Create greenhouse successful"
         );
-        return ApiResponse.<GreenHouseResponse>builder()
-                .data(greenHousesService.createGreenHouse(greenHouseCreateRequest))
-                .status(HttpStatus.OK)
-                .message("create greenhouse successful")
-                .success(true)
-                .build();
     }
 
     @Transactional
@@ -169,24 +137,11 @@ public class GreenHousesControllerHTTPs {
     @Transactional
     @DeleteMapping(value = "/ds-delete/{greenhouse_id}", consumes = "application/json",produces = "application/json")
     public ApiResponse<String> deleteGreenhouse(@PathVariable String greenhouse_id) {
-        String greenhouse = greenHousesHTTPsDataService.deleteGreenhouse(greenhouse_id);
-        if (greenhouse == null) {
-            log.info(
-                    "delete greenhouse failed, data service not response or error: {}",
-                    greenhouse_id
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        log.info(
-                "delete greenhouses success, data service response: {}",
-                greenhouse
+        String response = safeExecute(
+                () -> greenHousesHTTPsDataService.deleteGreenhouse(greenhouse_id),
+                "Delete greenhouse failed"
         );
-        return ApiResponse.<String>builder()
-                .data(greenhouse)
-                .status(HttpStatus.OK)
-                .message("delete greenhouse successful")
-                .success(true)
-                .build();
+        return buildResponse(response, "Delete greenhouse successful");
     }
 
     @Transactional
@@ -195,48 +150,22 @@ public class GreenHousesControllerHTTPs {
             @PathVariable String greenhouse_id,
             @RequestBody Field field
     ) {
-        Field fieldResponse = greenHousesHTTPsDataService.createField(greenhouse_id, field);
-        if (fieldResponse == null) {
-            log.info(
-                    "create field failed, data service not response or error: {}",
-                    field
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        log.info(
-                "create field success, data service response: {}",
-                fieldResponse
+        Field response = safeExecute(
+                () -> greenHousesHTTPsDataService.createField(greenhouse_id, field),
+                "Create field failed"
         );
-        return ApiResponse.<Field>builder()
-                .data(fieldResponse)
-                .status(HttpStatus.OK)
-                .message("create field successful")
-                .success(true)
-                .build();
+        return buildResponse(response, "Create field successful");
     }
 
 
     @Transactional
     @GetMapping(value = "ds-get-list-field/{greenhouse_id}", consumes = "application/json",produces = "application/json")
     public ApiResponse<List<Field>> getListField(@PathVariable String greenhouse_id) {
-        List<Field> fieldResponse = greenHousesHTTPsDataService.getFields(greenhouse_id);
-        if (fieldResponse == null) {
-            log.info(
-                    "get list field failed, data service not response or error: {}",
-                    greenhouse_id
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        log.info(
-                "get list field success, data service response: {}",
-                fieldResponse
+        List<Field> response = safeExecute(
+                () -> greenHousesHTTPsDataService.getFields(greenhouse_id),
+                "Get fields failed"
         );
-        return ApiResponse.<List<Field>>builder()
-                .data(fieldResponse)
-                .status(HttpStatus.OK)
-                .message("get list field successful")
-                .success(true)
-                .build();
+        return buildResponse(response, "Get fields successful");
     }
 
     @GetMapping(value = "ds-get-field/{greenhouse_id}/field/{field_index}", consumes = "application/json",produces = "application/json")
@@ -244,27 +173,11 @@ public class GreenHousesControllerHTTPs {
             @PathVariable String greenhouse_id,
             @PathVariable Integer field_index
     ) {
-        Field fieldResponse = greenHousesHTTPsDataService.getField(
-                greenhouse_id,
-                field_index
+        Field response = safeExecute(
+                () -> greenHousesHTTPsDataService.getField(greenhouse_id, field_index),
+                "Get field failed"
         );
-        if (fieldResponse == null) {
-            log.info(
-                    "get field failed, data service not response or error: {}",
-                    field_index
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        log.info(
-                "get field success, data service response: {}",
-                fieldResponse
-        );
-        return ApiResponse.<Field>builder()
-                .data(fieldResponse)
-                .status(HttpStatus.OK)
-                .message("get field successful")
-                .success(true)
-                .build();
+        return buildResponse(response, "Get field successful");
     }
 
     @Transactional
@@ -273,27 +186,11 @@ public class GreenHousesControllerHTTPs {
             @PathVariable String greenhouse_id,
             @PathVariable Integer field_index
     ) {
-        String fieldResponse = greenHousesHTTPsDataService.deleteField(
-                greenhouse_id,
-                field_index
+        String response = safeExecute(
+                () -> greenHousesHTTPsDataService.deleteField(greenhouse_id, field_index),
+                "Delete field failed"
         );
-        if (fieldResponse == null) {
-            log.info(
-                    "delete field failed, data service not response or error: {}",
-                    field_index
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        log.info(
-                "delete field success, data service response: {}",
-                fieldResponse
-        );
-        return ApiResponse.<String>builder()
-                .data(fieldResponse)
-                .status(HttpStatus.OK)
-                .message("delete field successful")
-                .success(true)
-                .build();
+        return buildResponse(response, "Delete field successful");
     }
 
     @GetMapping(value = "ds-get-field-history/{greenhouse_id}/field/{field_index}", produces = "application/json")
@@ -304,37 +201,11 @@ public class GreenHousesControllerHTTPs {
             @RequestParam String start_time,
             @RequestParam String end_time
     ) {
-        Object fieldResponse;
-        try {
-            fieldResponse = greenHousesHTTPsDataService.getFieldHistory(
-                    greenhouse_id,
-                    field_index,
-                    sensor_type,
-                    start_time,
-                    end_time
-            );
-        }
-        catch (Exception e) {
-            log.error("get field history failed, data service not response or error: {}", e.getMessage());
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        if (fieldResponse == null) {
-            log.info(
-                    "get field history failed, data service not response or error: {}",
-                    field_index
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        log.info(
-                "get field history success, data service response: {}",
-                fieldResponse
+        Object response = safeExecute(
+                () -> greenHousesHTTPsDataService.getFieldHistory(greenhouse_id, field_index, sensor_type, start_time, end_time),
+                "Get field history failed"
         );
-        return ApiResponse.<Object>builder()
-                .data(fieldResponse)
-                .status(HttpStatus.OK)
-                .message("get field history successful")
-                .success(true)
-                .build();
+        return buildResponse(response, "Get field history successful");
     }
 
     @Transactional
@@ -376,6 +247,32 @@ public class GreenHousesControllerHTTPs {
                 .success(true)
                 .build();
     }
+    private <T> ApiResponse<T> buildResponse(T data, String message) {
+        return ApiResponse.<T>builder()
+                .data(data)
+                .status(HttpStatus.OK)
+                .message(message)
+                .success(true)
+                .build();
+    }
 
+    private <T> T safeExecute(Supplier<T> action, String errorMessage) {
+        try {
+            return action.get();
+        } catch (Exception e) {
+            log.error("{}: {}", errorMessage, e.getMessage());
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+    }
+    private GreenHouseCreateRequest mapToCreateRequest(GreenHouseDataServiceResponse response) {
+        GreenHouseCreateRequest request = new GreenHouseCreateRequest();
+        request.setGreenhouseId(response.getGreenhouse_id());
+        request.setName(response.getName());
+        request.setLocation(response.getLocation());
+        request.setStatus(true);
+        request.setDescription(response.getOwner());
+        request.setUserId(response.getOwner());
+        return request;
+    }
 
 }

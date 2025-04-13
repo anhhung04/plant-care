@@ -5,7 +5,11 @@ import java.util.List;
 import java.util.Objects;
 
 import com.plantcare.mobile.clientsocket.ClientSocketSessionRegistry;
+import com.plantcare.mobile.dtoGlobal.Field;
+import com.plantcare.mobile.exception.AppException;
+import com.plantcare.mobile.exception.ErrorCode;
 import com.plantcare.mobile.greenhouses.dto.request.SubscribeRequest;
+import com.plantcare.mobile.greenhouses.feignclient.GreenHousesHTTPsDataService;
 import jakarta.transaction.Transactional;
 
 import org.springframework.data.domain.Page;
@@ -37,6 +41,7 @@ public class GreenHousesService {
     private SensorRepository sensorRepository;
     private SimpMessagingTemplate messagingTemplate;
     private final ClientSocketSessionRegistry clientSocketSessionRegistry;
+    private GreenHousesHTTPsDataService greenHousesHTTPsDataService;
 
     // Update data tu dataservice
     public void updateGreenhouse(Object dataUpdate) {
@@ -115,4 +120,23 @@ public class GreenHousesService {
         }
     }
 
+    public void checkGreenHouse(String greenhouseId) {
+        greenHousesRepository
+                .findById(greenhouseId)
+                .orElseThrow(() -> new RuntimeException("Greenhouse not found"));
+        // fake data, we will implement later
+    }
+
+    public void checkFieldIndex(String greenhouseId, Integer fieldIndex) {
+        try {
+            Field field=greenHousesHTTPsDataService.getField(greenhouseId, fieldIndex);
+            if (field == null) {
+                throw new AppException(ErrorCode.FIELD_NOT_FOUND);
+            }
+        }
+        catch (Exception e) {
+            throw new AppException(ErrorCode.FIELD_NOT_FOUND);
+        }
+
+    }
 }

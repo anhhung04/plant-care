@@ -60,7 +60,7 @@ public interface GreenHousesHTTPsDataService {
             @RequestParam String end_time
     );
 
-    @PostMapping(value = "/{greenhouse_id}/fields/{field_index}/control", produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/{greenhouse_id}/fields/{field_index}/control",consumes = MediaType.APPLICATION_JSON_VALUE,  produces = MediaType.APPLICATION_JSON_VALUE)
     String controlFieldDevice(
             @PathVariable String greenhouse_id,
             @PathVariable Integer field_index,
