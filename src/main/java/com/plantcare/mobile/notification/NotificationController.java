@@ -1,11 +1,11 @@
 package com.plantcare.mobile.notification;
 
-import java.util.List;
-
-import org.springframework.http.ResponseEntity;
+import com.plantcare.mobile.dtoGlobal.response.ApiResponse;
+import com.plantcare.mobile.notification.dto.request.NotificationCreationRequest;
+import com.plantcare.mobile.notification.dto.response.NotificationResponse;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.*;
-
-import com.plantcare.mobile.notification.entity.Notification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,25 +15,44 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationController {
-    private final NotificationService notificationService;
+    private final FireBaseMessagingService notificationService;
 
-    @GetMapping
-    public ResponseEntity<List<Notification>> getAllNotifications() {
-        return ResponseEntity.ok(notificationService.getAllNotifications());
-    }
-
-    @GetMapping("/{userId}")
-    public ResponseEntity<List<Notification>> getNotificationsByUser(@PathVariable String userId) {
-        return ResponseEntity.ok(notificationService.getNotificationsByUserId(userId));
-    }
 
     @PostMapping
-    public ResponseEntity<Notification> createNotification(@RequestBody Notification notification) {
-        return ResponseEntity.ok(notificationService.saveNotification(notification));
+    public ApiResponse<NotificationResponse> sendNotification(@RequestBody NotificationCreationRequest request) {
+        log.info("Received notification request: {}", request);
+        NotificationResponse response = notificationService.sendNotification(request);
+        if (response != null) {
+            return ApiResponse.<NotificationResponse>builder()
+                    .status(HttpStatusCode.valueOf(200))
+                    .message("Notification sent successfully")
+                    .data(response)
+                    .build();
+        } else {
+            return ApiResponse.<NotificationResponse>builder()
+                    .status(HttpStatusCode.valueOf(500))
+                    .message("Failed to send notification")
+                    .data(null)
+                    .build();
+        }
     }
 
-    @GetMapping("/check-connection")
-    public ResponseEntity<Boolean> checkDatabaseConnection() {
-        return ResponseEntity.ok(notificationService.checkConnection());
+    @GetMapping("/{id}")
+    public ApiResponse<NotificationResponse> getNotificationById(@PathVariable String id) {
+        log.info("Received request to get notification by ID: {}", id);
+        NotificationResponse response = notificationService.getNotificationById(id);
+        if (response != null) {
+            return ApiResponse.<NotificationResponse>builder()
+                    .status(HttpStatusCode.valueOf(200))
+                    .message("Notification retrieved successfully")
+                    .data(response)
+                    .build();
+        } else {
+            return ApiResponse.<NotificationResponse>builder()
+                    .status(HttpStatusCode.valueOf(404))
+                    .message("Notification not found")
+                    .data(null)
+                    .build();
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.plantcare.mobile.notification.entity;
+package com.plantcare.mobile.notification.dto.response;
 
 import com.google.cloud.Timestamp;
 import lombok.Builder;
@@ -8,11 +8,10 @@ import java.time.LocalDateTime;
 
 @Data
 @Builder
-public class Notification {
+public class NotificationResponse {
     private String id;
     private String title;
     private String content;
     private Timestamp timestamp;
     private boolean read;
-
 }

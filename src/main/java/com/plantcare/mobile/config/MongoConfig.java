@@ -9,7 +9,7 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
 @Configuration
-public class MongoConfiguration {
+public class MongoConfig {
 
     @Value("${spring.data.mongodb.uri}")
     private String uri;
