@@ -1,10 +1,10 @@
   import { Redirect, Slot, Stack, useRouter } from 'expo-router';
   import {AuthProvider, useAuth } from '../src/context/AuthContext';
   import { useContext, useEffect, useState } from 'react';
-  import * as SplashScreen from 'expo-splash-screen';
   import { StatusBar,Text } from 'react-native';
-import LottieView from 'lottie-react-native';
-import { LoadingScreen } from './auth/waiting';
+  import { LoadingScreen } from './auth/waiting';
+  import { GardenProvider } from '@/src/context/GreenHouse';
+
   // Component chính để quản lý layout và điều hướng
 
 
@@ -33,8 +33,6 @@ import { LoadingScreen } from './auth/waiting';
       return <LoadingScreen />; // Your loading component
     }
 
-    console.log("Rendering RootLayoutNav with:", 
-      { authenticated: authState?.authenticated, isFirstTimeUser,loading });
       return (
         <>
         <Stack screenOptions={{ headerShown: false }}>
@@ -54,7 +52,9 @@ export default function RootLayout() {
       StatusBar.setBackgroundColor('transparent');
       return (
         <AuthProvider>
+          <GardenProvider>
             <RootLayoutNav />
+          </GardenProvider>
         </AuthProvider>
       );
 }

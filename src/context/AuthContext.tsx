@@ -1,6 +1,7 @@
   import React, { createContext, useState, useEffect, useContext } from 'react';
   import axios from 'axios';
   import * as SecureStore from 'expo-secure-store';
+import { API_BASE_URL } from '@/config';
 
   interface AuthProps {
     authState?: {token: string| null; authenticated: boolean | null};
@@ -13,12 +14,16 @@
   }
 
   const TOKEN_KEY = 'my-jwt';
-  export const API_URL = 'http://localhost:3000';
+  export const API_URL = API_BASE_URL;
   const AuthContext = createContext<AuthProps | undefined>(undefined);
 
   
   export const useAuth = () => {
     return useContext(AuthContext);
+  }
+
+  export const getAccessToken = async () => {
+    return await SecureStore.getItemAsync(TOKEN_KEY);
   }
   
 
@@ -46,7 +51,7 @@
         const token = response.data.token;
         setAuthState({token, authenticated: true});
 
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        //axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 
         await SecureStore.setItemAsync(TOKEN_KEY, token);
 
@@ -61,7 +66,7 @@
     const logout = async () => {
       await SecureStore.deleteItemAsync(TOKEN_KEY);
 
-      axios.defaults.headers.common['Authorization'] = '';
+      //axios.defaults.headers.common['Authorization'] = '';
 
       setAuthState({token: null, authenticated: false});
       console.log(authState.token);
@@ -90,7 +95,7 @@
           const firstTimeUser = await SecureStore.getItemAsync('isFirstTimeUser');
 
           if (token) {
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+            //axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
             setAuthState({token, authenticated: true});
           } else {
             setAuthState({token: null, authenticated: false});

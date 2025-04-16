@@ -11,5 +11,6 @@ export const colors = {
   black: '#000000',
   orange100: '#FFA500',
   axis:'#D9D9D9',
-  bg:'#f1f7f1'
+  bg:'#f1f7f1',
+  background: '#272727',
 };

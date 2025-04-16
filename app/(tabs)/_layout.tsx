@@ -14,6 +14,9 @@ import HomeScreen from '.';
 import Setting from './setting';
 import Profile from './profile';
 import { useAuth } from '@/src/context/AuthContext';
+import GardenSetting from './gsetting';
+import { useGarden } from '@/src/context/GreenHouse';
+import { G } from 'react-native-svg';
 export const TabBarContext = createContext({
   showTabBar: () => {},
   hideTabBar: () => {},
@@ -28,142 +31,152 @@ export default function TabLayout() {
   const isFirstTimeUser = authContext?.isFirstTimeUser;
   const loading = authContext?.loading;
 
-  if (loading){
-    return <Text style={{fontSize: 100}}>Loading...</Text>;
-  }
-     if (!authState?.authenticated) {
+  const { selectedGreenhouse, selectedField } = useGarden();
+
+    if (loading){
+      return <Text style={{fontSize: 100}}>Loading...</Text>;
+    }
+
+    if (!authState?.authenticated) {
       if (isFirstTimeUser) {
         return <Redirect href={'/auth/onboarding'} />;
       } else {
         return <Redirect href={'/auth/signin'} />;
       }
     }
+
+    if (!selectedGreenhouse || !selectedField) {
+        return (
+          <GardenSetting/>
+        );
+    }
     
 
   return (
     <TabBarContext.Provider value={{ showTabBar: () => setTabBarVisible(true), hideTabBar: () => setTabBarVisible(false) }}>  
-    <Tab.Navigator
-      tabBar={({ navigation, state, descriptors, insets }) => (
-        <BottomNavigation.Bar
-          navigationState={state}
-          safeAreaInsets={insets}
-          activeColor={colors.primary}
-          inactiveColor={colors.secondary}
-          style={{ ...styles.tabBar, display: tabBarVisible ? "flex" : "none" }}
-          onTabPress={({ route, preventDefault }) => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (event.defaultPrevented) {
-              preventDefault();
-            } else {
-             navigation.dispatch({
-                ...CommonActions.navigate(route.name, route.params),
-                target: state.key,
+      <Tab.Navigator
+        tabBar={({ navigation, state, descriptors, insets }) => (
+          <BottomNavigation.Bar
+            navigationState={state}
+            safeAreaInsets={insets}
+            activeColor={colors.primary}
+            inactiveColor={colors.secondary}
+            style={{ ...styles.tabBar, display: tabBarVisible ? "flex" : "none" }}
+            onTabPress={({ route, preventDefault }) => {
+              const event = navigation.emit({
+                type: 'tabPress',
+                target: route.key,
+                canPreventDefault: true,
               });
-            }
-          }}
-          renderIcon={({ route, focused, color }) => {
-            const { options } = descriptors[route.key];
-            if (options.tabBarIcon) {
-              return options.tabBarIcon({ focused, color, size: 24 });
-            }
 
-            return null;
-          }}
-          getLabelText={({ route }) => {
-            const { options } = descriptors[route.key];
-            const label =
-              options.tabBarLabel !== undefined
-                ? options.tabBarLabel
-                : options.title !== undefined
-                ? options.title
-                : route.name;
+              if (event.defaultPrevented) {
+                preventDefault();
+              } else {
+              navigation.dispatch({
+                  ...CommonActions.navigate(route.name, route.params),
+                  target: state.key,
+                });
+              }
+            }}
+            renderIcon={({ route, focused, color }) => {
+              const { options } = descriptors[route.key];
+              if (options.tabBarIcon) {
+                return options.tabBarIcon({ focused, color, size: 24 });
+              }
 
-            return typeof label === 'string' ? label : undefined;
+              return null;
+            }}
+            getLabelText={({ route }) => {
+              const { options } = descriptors[route.key];
+              const label =
+                options.tabBarLabel !== undefined
+                  ? options.tabBarLabel
+                  : options.title !== undefined
+                  ? options.title
+                  : route.name;
+
+              return typeof label === 'string' ? label : undefined;
+            }} 
+            keyboardHidesNavigationBar={true}
+            theme={{
+              colors: {
+                secondaryContainer: '#b8e7bb', // Semi-transparent white
+              }
+            }}
+          />
+        )}
+        screenOptions={{
+          headerShown: false,
+          tabBarStyle: {...styles.tabBar, display: tabBarVisible ? "flex" : "none" },
+          // tabBarActiveTintColor: colors.primary,
+          // tabBarInactiveTintColor: colors.secondary,
+          // tabBarLabelStyle: styles.tabBarLabel,
+          // tabBarShowLabel: true,
+          // tabBarHideOnKeyboard: true,
+          // tabBarBackground: () => (
+          //   <View style={styles.tabBarBackground} />
+          // ),
+        }}
+        initialRouteName='index'
+      >
+        
+        <Tab.Screen 
+          name="dashboard" 
+          component={Dashboard}
+          options={{ 
+            title: 'Thống kê',
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="bar-chart-2" size={size} color={color} />
+            ),
           }} 
-          keyboardHidesNavigationBar={true}
-          theme={{
-            colors: {
-              secondaryContainer: '#b8e7bb', // Semi-transparent white
-            }
-          }}
         />
-      )}
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {...styles.tabBar, display: tabBarVisible ? "flex" : "none" },
-        // tabBarActiveTintColor: colors.primary,
-        // tabBarInactiveTintColor: colors.secondary,
-        // tabBarLabelStyle: styles.tabBarLabel,
-        // tabBarShowLabel: true,
-        // tabBarHideOnKeyboard: true,
-        // tabBarBackground: () => (
-        //   <View style={styles.tabBarBackground} />
-        // ),
-      }}
-      initialRouteName='index'
-    >
-      
-      <Tab.Screen 
-        name="dashboard" 
-        component={Dashboard}
-        options={{ 
-          title: 'Thống kê',
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="bar-chart-2" size={size} color={color} />
-          ),
-        }} 
-      />
-      
-      <Tab.Screen 
-        name="reminder" 
-        component={Reminder}
-        options={{ 
-          title: 'Nhắc nhở',
-          tabBarIcon: ({ color, size }) => (
-            <View style={styles.reminderIconContainer}>
-              <Feather name="bell" size={size} color={color} />
-            </View>
-          ),
-        }} 
-      />
-      <Tab.Screen 
-        name="index" 
-        component={HomeScreen}
-        options={{ 
-          title: 'Trang chủ',
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
-          ),
-        }} 
-      />
-      
-      <Tab.Screen 
-        name="setting" 
-        component={Setting}
-        options={{ 
-            title: 'Thiết bị',
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="settings" size={size} color={color} />
-          ),
-        }} 
-      />
-      
-      <Tab.Screen 
-        name="profile" 
-        component={Profile}
-        options={{ 
-          title: 'Cá nhân',
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="user" size={size} color={color} />
-          ),
-        }} 
-      />
-    </Tab.Navigator>
+        
+        <Tab.Screen 
+          name="reminder" 
+          component={Reminder}
+          options={{ 
+            title: 'Nhắc nhở',
+            tabBarIcon: ({ color, size }) => (
+              <View style={styles.reminderIconContainer}>
+                <Feather name="bell" size={size} color={color} />
+              </View>
+            ),
+          }} 
+        />
+        <Tab.Screen 
+          name="index" 
+          component={HomeScreen}
+          options={{ 
+            title: 'Trang chủ',
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="home" size={size} color={color} />
+            ),
+          }} 
+        />
+        
+        <Tab.Screen 
+          name="setting" 
+          component={Setting}
+          options={{ 
+              title: 'Thiết bị',
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="settings" size={size} color={color} />
+            ),
+          }} 
+        />
+        
+        <Tab.Screen 
+          name="profile" 
+          component={Profile}
+          options={{ 
+            title: 'Cá nhân',
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="user" size={size} color={color} />
+            ),
+          }} 
+        />
+
+      </Tab.Navigator>
     </TabBarContext.Provider>
   );
 }

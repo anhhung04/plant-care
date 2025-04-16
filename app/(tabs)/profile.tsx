@@ -11,17 +11,18 @@ import {
   Alert,
 } from 'react-native';
 import FeatherIcon from '@expo/vector-icons/Feather';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/assets/fonts/colors';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import ReportModal from '@/src/components/ReportModal';
 import { useContext } from 'react';
 import { TabBarContext } from './_layout';
 import { ChangeAreaModal } from '@/src/components/ChangeAreaModal';
 import { useAuth } from '@/src/context/AuthContext';
-
-const areasAll = ['NorthEast_1','NorthEast_2','SouthWest_1']
-const current = 'NorthEast_1'
+import { Field, Greenhouse, useGarden } from '@/src/context/GreenHouse';
+import GardenSetting from './gsetting';
+import { G } from 'react-native-svg';
 
 export default function Profile() {
   const [form, setForm] = useState({
@@ -30,12 +31,29 @@ export default function Profile() {
   });
   const [isModalVisible, setModalVisible] = useState(false);
   const [isChangeAreaVisible, setChangeAreaVisible] = useState(false)
+  const [isChangeGreenhouseVisible, setChangeGreenhouseVisible] = useState(false)
+
   const { hideTabBar, showTabBar } = useContext(TabBarContext);
-  const [currentState, setCurrentState] = useState<string>(current)
 
   const authContext = useAuth();
   const onLogout = authContext?.onLogout;
   const insets = useSafeAreaInsets();
+
+
+  const {
+      selectedGreenhouse,
+      fields,
+      selectedField, 
+      selectField,
+      clearSelectedOptions
+    } = useGarden();
+  
+  if (!selectedGreenhouse || !selectedField) {
+      return (
+          <GardenSetting/>
+      );
+  }
+
   const handleSendFeedback = (feedback: string) => {
     // Handle feedback logic
     console.log("Feeback ",Date(),": ",feedback);
@@ -77,173 +95,213 @@ export default function Profile() {
     hideTabBar();
   }
 
-  const handleChangeArea = () => {
+  const handleChangeArea = (area ?: Field) => {
     setChangeAreaVisible(false);
     showTabBar();
+    if (area) {
+      selectField(area);
+    } else {
+      // Handle the case when no field is selected (null)
+      console.log("No Field selected");
+    }
   }
+
+  const setGreenhouse = () =>  {
+    setChangeGreenhouseVisible(true);
+    clearSelectedOptions();
+    hideTabBar();
+  }
+
   useEffect(() => {
     // console.log("Current: ",form.emailNotifications, " and ", form.pushNotifications)
   }, [form]);
 
   return (
     <SafeAreaView style={{flex:1, backgroundColor: colors.bg}}>
-
-      <View style={{paddingTop: insets.top }}>
-        <View style={styles.profile}>
-          <TouchableOpacity
-            onPress={() => {
-              // handle onPress
-            }}>
-            <View style={styles.profileAvatarWrapper}>
-              <Image
-                alt=""
-                source={{
-                  uri: 'https://i.imgflip.com/36kwyk.jpg?a483600',
-                }}
-                style={styles.profileAvatar} />
-
-              <TouchableOpacity
-                onPress={() => {
-                  // handle onPress
-                }}>
-                <View style={styles.profileAction}>
-                  <FeatherIcon color="#fff" name="edit-3" size={15} />
-                </View>
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-
-          <View>
-            <Text style={styles.profileName}>Trần Phương Tuấn</Text>
-
-            <Text style={styles.profileAddress}>
-              Quản lý
-            </Text>
-          </View>
-        </View>
-
-        <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Chung</Text>
-
+      { isChangeGreenhouseVisible && <GardenSetting/> }
+      {!isChangeGreenhouseVisible && (
+        <ScrollView 
+        style={{paddingTop: insets.top }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 70 }}
+        >
+  
+          <View style={styles.profile}>
             <TouchableOpacity
-              onPress={() => {
-                setArea()
-              }}
-              style={styles.row}>
-              <View style={[styles.rowIcon, { backgroundColor: '#fe9400' }]}>
-                <FeatherIcon color="#fff" name="globe" size={24} />
-              </View>
-
-              <Text style={styles.rowLabel}>Đổi khu đất</Text>
-
-              <View style={styles.rowSpacer} />
-
-              <FeatherIcon
-                color="#C6C6C6"
-                name="chevron-right"
-                size={28} />
+                  onPress={() => {
+                    setGreenhouse()
+                  }}
+                  style={[styles.row, { width: '60%' , backgroundColor: colors.bg}]}>
+                  <View style={[styles.rowIcon, { marginRight: 6}]}>
+                    <FontAwesome name="leaf" size={24} color="green" />
+                  </View>
+  
+                  <Text style={[styles.rowLabel , {fontWeight: '600'}]}>Đổi Greenhouse</Text>
+  
+                  <View style={styles.rowSpacer} />
+  
+                  <FeatherIcon
+                    color="#C6C6C6"
+                    name="chevron-right"
+                    size={28} />
             </TouchableOpacity>
-
-            <View style={styles.row}>
-              <View style={[styles.rowIcon, { backgroundColor: '#3bbedb' }]}>
-                <FeatherIcon color="#fff" name="at-sign" size={24} />
-              </View>
-
-              <Text style={styles.rowLabel}>Thông báo Email</Text>
-
-              <View style={styles.rowSpacer} />
-
-              <Switch
-                onValueChange={emailNotifications =>
-                  setForm({ ...form, emailNotifications })
-                }
-                trackColor={{ false: '#f4f4f4', true: '#b4e0e9' }}
-                thumbColor={form.emailNotifications ? '#3bbedb' : '#fff'}
-                value={form.emailNotifications} />
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.rowIcon, { backgroundColor: '#38C959' }]}>
-                <FeatherIcon color="#fff" name="bell" size={24} />
-              </View>
-
-              <Text style={styles.rowLabel}>Thông báo điện thoại</Text>
-
-              <View style={styles.rowSpacer} />
-
-              <Switch
-                onValueChange={pushNotifications =>
-                  setForm({ ...form, pushNotifications })
-                }
-                trackColor={{ false: '#f4f4f4', true: '#b6d7a8' }}
-                thumbColor={form.pushNotifications ? '#38C959' : '#fff'}
-                value={form.pushNotifications} />
-            </View>
-
-            <TouchableOpacity
-              onPress={() => {
-                pressLogout();
-              }}
-              style={styles.row}>
-              <View style={[styles.rowIcon, { backgroundColor: 'red' }]}>
-                <FeatherIcon color="#fff" name="log-out" size={24} />
-              </View>
-
-              <Text style={styles.rowLabel}>Đăng xuất</Text>
-
-              <View style={styles.rowSpacer} />
-
-              <FeatherIcon
-                color="#C6C6C6"
-                name="chevron-right"
-                size={28} />
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Tiện ích</Text>
-
-            <TouchableOpacity
-              onPress={() => {
-                setModalVisible(true);
-              }}
-              style={styles.row}>
-              <View style={[styles.rowIcon, { backgroundColor: '#8e8d91' }]}>
-                <FeatherIcon color="#fff" name="flag" size={24} />
-              </View>
-
-              <Text style={styles.rowLabel}>Báo cáo Bug</Text>
-
-              <View style={styles.rowSpacer} />
-
-              <FeatherIcon
-                color="#C6C6C6"
-                name="chevron-right"
-                size={28} />
-            </TouchableOpacity>
-
+  
             <TouchableOpacity
               onPress={() => {
                 // handle onPress
-              }}
-              style={styles.row}>
-              <View style={[styles.rowIcon, { backgroundColor: '#007afe' }]}>
-                <FeatherIcon color="#fff" name="mail" size={24} />
+              }}>
+              <View style={styles.profileAvatarWrapper}>
+                <Image
+                  alt=""
+                  source={{
+                    uri: 'https://i.imgflip.com/36kwyk.jpg?a483600',
+                  }}
+                  style={styles.profileAvatar} />
+  
+                <TouchableOpacity
+                  onPress={() => {
+                    // handle onPress
+                  }}>
+                  <View style={styles.profileAction}>
+                    <FeatherIcon color="#fff" name="edit-3" size={15} />
+                  </View>
+                </TouchableOpacity>
               </View>
-
-              <Text style={styles.rowLabel}>Liên hệ admin</Text>
-
-              <View style={styles.rowSpacer} />
-
-              <FeatherIcon
-                color="#C6C6C6"
-                name="chevron-right"
-                size={28} />
             </TouchableOpacity>
+  
+            <View>
+              <Text style={styles.profileName}>Trịnh Phương Tuấn</Text>
+  
+              <Text style={styles.profileAddress}>
+                Quản lý
+              </Text>
+            </View>
           </View>
+  
+          <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Chung</Text>
+  
+              <TouchableOpacity
+                onPress={() => {
+                  setArea()
+                }}
+                style={styles.row}>
+                <View style={[styles.rowIcon, { backgroundColor: '#fe9400' }]}>
+                  <FeatherIcon color="#fff" name="globe" size={24} />
+                </View>
+  
+                <Text style={styles.rowLabel}>Đổi khu đất</Text>
+  
+                <View style={styles.rowSpacer} />
+  
+                <FeatherIcon
+                  color="#C6C6C6"
+                  name="chevron-right"
+                  size={28} />
+              </TouchableOpacity>
+  
+              <View style={styles.row}>
+                <View style={[styles.rowIcon, { backgroundColor: '#3bbedb' }]}>
+                  <FeatherIcon color="#fff" name="at-sign" size={24} />
+                </View>
+  
+                <Text style={styles.rowLabel}>Thông báo Email</Text>
+  
+                <View style={styles.rowSpacer} />
+  
+                <Switch
+                  onValueChange={emailNotifications =>
+                    setForm({ ...form, emailNotifications })
+                  }
+                  trackColor={{ false: '#f4f4f4', true: '#b4e0e9' }}
+                  thumbColor={form.emailNotifications ? '#3bbedb' : '#fff'}
+                  value={form.emailNotifications} />
+              </View>
+  
+              <View style={styles.row}>
+                <View style={[styles.rowIcon, { backgroundColor: '#38C959' }]}>
+                  <FeatherIcon color="#fff" name="bell" size={24} />
+                </View>
+  
+                <Text style={styles.rowLabel}>Thông báo điện thoại</Text>
+  
+                <View style={styles.rowSpacer} />
+  
+                <Switch
+                  onValueChange={pushNotifications =>
+                    setForm({ ...form, pushNotifications })
+                  }
+                  trackColor={{ false: '#f4f4f4', true: '#b6d7a8' }}
+                  thumbColor={form.pushNotifications ? '#38C959' : '#fff'}
+                  value={form.pushNotifications} />
+              </View>
+  
+              <TouchableOpacity
+                onPress={() => {
+                  pressLogout();
+                }}
+                style={styles.row}>
+                <View style={[styles.rowIcon, { backgroundColor: 'red' }]}>
+                  <FeatherIcon color="#fff" name="log-out" size={24} />
+                </View>
+  
+                <Text style={styles.rowLabel}>Đăng xuất</Text>
+  
+                <View style={styles.rowSpacer} />
+  
+                <FeatherIcon
+                  color="#C6C6C6"
+                  name="chevron-right"
+                  size={28} />
+              </TouchableOpacity>
+            </View>
+  
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Tiện ích</Text>
+  
+              <TouchableOpacity
+                onPress={() => {
+                  setModalVisible(true);
+                }}
+                style={styles.row}>
+                <View style={[styles.rowIcon, { backgroundColor: '#8e8d91' }]}>
+                  <FeatherIcon color="#fff" name="flag" size={24} />
+                </View>
+  
+                <Text style={styles.rowLabel}>Báo cáo Bug</Text>
+  
+                <View style={styles.rowSpacer} />
+  
+                <FeatherIcon
+                  color="#C6C6C6"
+                  name="chevron-right"
+                  size={28} />
+              </TouchableOpacity>
+  
+              <TouchableOpacity
+                onPress={() => {
+                  // handle onPress
+                }}
+                style={styles.row}>
+                <View style={[styles.rowIcon, { backgroundColor: '#007afe' }]}>
+                  <FeatherIcon color="#fff" name="mail" size={24} />
+                </View>
+  
+                <Text style={styles.rowLabel}>Liên hệ admin</Text>
+  
+                <View style={styles.rowSpacer} />
+  
+                <FeatherIcon
+                  color="#C6C6C6"
+                  name="chevron-right"
+                  size={28} />
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+          
         </ScrollView>
-      </View>
+      )}
+
       <ReportModal
         isVisible={isModalVisible}
         onClose={() => setModalVisible(false)}
@@ -251,10 +309,11 @@ export default function Profile() {
       />
       <ChangeAreaModal
         visible={isChangeAreaVisible}
-        onClose={() => {handleChangeArea();}}
-        current={currentState}
-        areas={areasAll}
+        onClose={(area?: Field) => { handleChangeArea(area); }}
+        current={selectedField}
+        areas={fields}
       />
+      
     </SafeAreaView>
   );
 }

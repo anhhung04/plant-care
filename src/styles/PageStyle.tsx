@@ -107,13 +107,13 @@ const styles = StyleSheet.create({
   DetailText: {
     flex: 1,
     color: colors.nblack,
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fonts.Regular,
     paddingLeft: 10,
   },
   DetailValue: {
     color: colors.nblack,
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: fonts.SemiBold,
     right:0,
     paddingRight: 10,
@@ -152,6 +152,13 @@ const styles = StyleSheet.create({
   resendTextDisabled: {
     color: colors.secondary,
     opacity: 0.6,
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#00FF00', // bright green
+    marginLeft: 5,
   },
 });
 

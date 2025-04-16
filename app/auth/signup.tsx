@@ -69,18 +69,27 @@ const SignupScreen = () => {
           />
         </View>
         <View style={styles.inputContainer}>
-          <Feather name={"user"} size={30} color={colors.secondary} />
-          <TextInput
-            style={styles.textInput}
-            placeholder="Tên đăng nhập"
-            placeholderTextColor={colors.secondary}
-          />
-        </View>
-        <View style={styles.inputContainer}>
           <Feather name={"lock"} size={30} color={colors.secondary} />
           <TextInput
             style={styles.textInput}
             placeholder="Mật khẩu"
+            placeholderTextColor={colors.secondary}
+            secureTextEntry={secureEntery}
+          />
+          <TouchableOpacity
+            onPress={() => {
+              setSecureEntery((prev) => !prev);
+            }}
+          >
+            <Feather name={"eye"} size={20} color={colors.secondary} />
+          </TouchableOpacity>
+        </View>
+        
+        <View style={styles.inputContainer}>
+          <Feather name={"lock"} size={30} color={colors.secondary} />
+          <TextInput
+            style={styles.textInput}
+            placeholder="Nhập lại mật khẩu"
             placeholderTextColor={colors.secondary}
             secureTextEntry={secureEntery}
           />

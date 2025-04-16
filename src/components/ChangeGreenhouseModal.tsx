@@ -12,7 +12,7 @@ import {
   BackHandler
 } from 'react-native';
 import {colors} from '@/assets/fonts/colors';
-import { ChangeAreaModalProps} from '@/src/utils/modal';
+import { ChangeGreenhouseModalProps} from '@/src/utils/modal';
 import { ScrollView, Image } from 'react-native';
 import { Card} from 'react-native-paper';
 const { height } = Dimensions.get('window');
@@ -21,12 +21,12 @@ import { Greenhouse , Field } from '../context/GreenHouse';
 
 // Định nghĩa props cho component
 
-export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClose, areas, current }) => {
+export const ChangeGreenhouseModal: React.FC<ChangeGreenhouseModalProps> = ({ visible, onClose, areas, current }) => {
   // Animation values
   const translateY = useRef(new Animated.Value(height)).current;
   const modalHeight = height * 0.5; // Chừa lại 8% phía trên màn hình
-  const [areaState, setAreaState] = useState<Field[]>(areas || []);
-  const [currentState, setCurrentState] = useState<Field>(current || '');
+  const [areaState, setAreaState] = useState<Greenhouse[]>(areas || []);
+  const [currentState, setCurrentState] = useState<Greenhouse>(current || '');
   // Set up pan responder để xử lý gesture vuốt
   const panResponder = useRef(
     PanResponder.create({
@@ -60,8 +60,9 @@ export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClo
       setTimeout(() => {
       }, 200);
       showModal();
+    } else {
+      hideModal();
     }
-    setAreaState(areas || []);
     const handleBackPress = () => {
         if (visible) {
           hideModal(); // Close the modal when back button is pressed
@@ -87,18 +88,21 @@ export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClo
     }).start();
   };
 
-  const hideModal = (area?: Field) => {
+const hideModal = (area?: Greenhouse) => {
     Animated.timing(translateY, {
-      toValue: height,
-      duration: 300,
-      useNativeDriver: true,
+        toValue: height,
+        duration: 300,
+        useNativeDriver: true,
     }).start(() => {
-      setCurrentState(area || currentState);
-      onClose(area);
-      setTimeout(() => {
-      }, 50);
+        if (area) {
+            onClose(area);
+        } else {
+            onClose();
+        }
+        setTimeout(() => {
+        }, 50);
     });
-  };
+};
 
   if (!visible) return null;
 
@@ -130,7 +134,7 @@ export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClo
             <View style={styles.dragIndicator} />
             <ScrollView style={styles.cardContainer}>
             {areaState.map((area, index) => {
-                const isCurrent = area.id === currentState.id;
+                const isCurrent = area === currentState;
                 return(
                 <TouchableOpacity 
                     style={[styles.card, isCurrent && styles.currentAreaCard ]}

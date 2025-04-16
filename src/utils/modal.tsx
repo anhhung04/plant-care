@@ -1,3 +1,5 @@
+import { Greenhouse , Field } from "../context/GreenHouse";
+
 export interface BottomSheetModalProps {
     visible: boolean;
     onClose: () => void;
@@ -7,9 +9,16 @@ export interface BottomSheetModalProps {
 
   export interface ChangeAreaModalProps {
     visible: boolean;
-    onClose: () => void;
-    areas: string[];
-    current: string;
+    onClose: (area?: Field) => void;
+    areas: Field[];
+    current: Field;
+  }
+
+  export interface ChangeGreenhouseModalProps {
+    visible: boolean;
+    onClose: (area?:Greenhouse) => void;
+    areas: Greenhouse[];
+    current: Greenhouse;
   }
 
   export interface CreateReminderModalProps {
