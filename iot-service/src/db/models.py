@@ -36,22 +36,22 @@ class SensorData(BaseModel):
 
 class GreenhouseField(BaseModel):
     temperature_sensor: List[SensorData] = Field(
-        default=None, description="Temperature sensor data"
+        default=[], description="Temperature sensor data"
     )
     humidity_sensor: List[SensorData] = Field(
-        default=None, description="Humidity sensor data"
+        default=[], description="Humidity sensor data"
     )
     soil_moisture_sensor: List[SensorData] = Field(
-        default=None, description="Soil moisture sensor data"
+        default=[], description="Soil moisture sensor data"
     )
     light_sensor: List[SensorData] = Field(
-        default=None, description="Light sensor data"
+        default=[], description="Light sensor data"
     )
     fan_status: List[SensorData] = Field(
-        default=None, description="Fan operational status"
+        default=[], description="Fan operational status"
     )
-    led_status: List[SensorData] = Field(default=None, description="LED light status")
-    pump_status: List[SensorData] = Field(default=None, description="Water pump status")
+    led_status: List[SensorData] = Field(default=[], description="LED light status")
+    pump_status: List[SensorData] = Field(default=[], description="Water pump status")
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Additional field metadata"
     )
@@ -63,7 +63,7 @@ class Greenhouse(BaseModel):
     name: str = Field(..., description="Name of the greenhouse")
     owner: str = Field(default="guest", description="Username of the greenhouse owner")
     fields: List[GreenhouseField] = Field(
-        default_factory=list,
+        default=[],
         description="List of greenhouse fields with their sensor data",
     )
     created_at: datetime = Field(

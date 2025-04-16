@@ -34,3 +34,5 @@ services:
       # Logging settings
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       LOG_FORMAT: ${LOG_FORMAT:-%(asctime)s - %(name)s - %(levelname)s - %(message)s}
+
+      BE_PRESHARED_KEY: ${BE_PRESHARED_KEY:-supersecret}

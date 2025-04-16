@@ -69,9 +69,10 @@ class GreenhouseRepository:
                 },
                 {
                     "$push": {
-                        f"fields.{field_index}.{sensor_type}": sensor_data,
-                        "updated_at": datetime.utcnow(),
-                        "$position": 0,
+                        f"fields.{field_index}.{sensor_type}": {
+                            "$each": [sensor_data],
+                            "$position": 0
+                        },
                     }
                 },
             )

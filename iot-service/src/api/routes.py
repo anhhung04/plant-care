@@ -1,3 +1,4 @@
+import requests
 from datetime import datetime, timedelta
 from typing import List, Optional, Literal
 
@@ -23,18 +24,20 @@ def get_repository() -> GreenhouseRepository:
 
 def get_mqtt_client():
     from config.settings import get_settings
-
+    from main import mqtt_client
     settings = get_settings()
 
-    client = MQTTClient(
-        client_id=settings.MQTT_CLIENT_ID,
-        host=settings.MQTT_HOST,
-        port=settings.MQTT_PORT,
-        username=settings.MQTT_USERNAME,
-        password=settings.MQTT_PASSWORD,
-        use_tls=settings.MQTT_USE_TLS,
-    )
-    return client
+    if not mqtt_client:
+        mqtt_client = MQTTClient(
+            client_id=settings.MQTT_CLIENT_ID,
+            host=settings.MQTT_HOST,
+            port=settings.MQTT_PORT,
+            username=settings.MQTT_USERNAME,
+            password=settings.MQTT_PASSWORD,
+            use_tls=settings.MQTT_USE_TLS,
+        )
+        mqtt_client.connect()
+    return mqtt_client
 
 
 @router.post("", response_model=GreenhouseResponse, status_code=status.HTTP_201_CREATED)
@@ -262,7 +265,7 @@ async def control_field_device(
     greenhouse_id: str,
     field_index: int,
     device: Literal["fan", "led", "pump"] = Query(..., description="Device to control"),
-    action: Literal["on", "off"] = Query(..., description="Action to perform"),
+    value: int = Query(..., description="Value to set for the device"),
     repo: GreenhouseRepository = Depends(get_repository),
     mqtt_client: MQTTClient = Depends(get_mqtt_client),
 ):
@@ -280,18 +283,16 @@ async def control_field_device(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Field index {field_index} not found",
             )
-        greenhouse_id = greenhouse_id.replace("-", "_")
-        topic = f"{greenhouse_id}.{field_index}-{device}"
-        payload = 1 if action == "on" else 0
+        topic = f"{settings.MQTT_USERNAME}/feeds/{greenhouse_id.replace('_', '-')}.{field_index}-{device}"
 
-        success = mqtt_client.publish(topic, payload)
+        success = mqtt_client.publish(topic, value)
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to send command to device",
             )
 
-        return {"status": "success", "message": f"{device} {action} command sent"}
+        return {"status": "success", "message": f"{device}'s value has been set to {value}"}
 
     except Exception as e:
         raise HTTPException(

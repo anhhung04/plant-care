@@ -43,6 +43,8 @@ class Settings(BaseSettings):
     LOG_FORMAT: str = Field(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s", env="LOG_FORMAT"
     )
+    
+    BE_PRESHARED_KEY: str = Field("", env="BE_PRESHARED_KEY")
 
     @validator("CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> List[str]:

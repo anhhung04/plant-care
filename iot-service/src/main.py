@@ -53,7 +53,7 @@ async def lifespan(app: FastAPI):
     # command_repo = get_command_repository()
 
     mqtt_client.register_handler(
-        settings.MQTT_USERNAME + "/groups/+/+", SensorReadingHandler(reading_repo)
+        settings.MQTT_USERNAME + "/feeds/+/json", SensorReadingHandler(reading_repo)
     )
     # mqtt_client.register_handler(
     #     "devices/+/commands/response", DeviceCommandHandler(command_repo, mqtt_client)
