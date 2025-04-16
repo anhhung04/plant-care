@@ -131,6 +131,7 @@ public class GreenHousesControllerHTTPs {
                 .build();
     }
 
+
     @Transactional
     @GetMapping(value = "/ds-get/{greenhouse_id}", consumes = "application/json",produces = "application/json")
     public ApiResponse<GreenHouseDataServiceResponse> getGreenhouse(@PathVariable String greenhouse_id) {
@@ -147,6 +148,29 @@ public class GreenHousesControllerHTTPs {
                 greenhouse
         );
         greenhouse= dataConverter.getFieldsRecent(greenhouse);
+        return ApiResponse.<GreenHouseDataServiceResponse>builder()
+                .data(greenhouse)
+                .status(HttpStatus.OK)
+                .message("get greenhouse successful")
+                .success(true)
+                .build();
+    }
+
+    @Transactional
+    @GetMapping(value = "/ds-get-analyze/{greenhouse_id}", consumes = "application/json",produces = "application/json")
+    public ApiResponse<GreenHouseDataServiceResponse> getGreenhouseAnalyze(@PathVariable String greenhouse_id) {
+        GreenHouseDataServiceResponse greenhouse = greenHousesHTTPsDataService.getGreenhouse(greenhouse_id);
+        if (greenhouse == null) {
+            log.info(
+                    "get greenhouse failed, data service not response or error: {}",
+                    greenhouse_id
+            );
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        log.info(
+                "get greenhouses success, data service response: {}",
+                greenhouse
+        );
         return ApiResponse.<GreenHouseDataServiceResponse>builder()
                 .data(greenhouse)
                 .status(HttpStatus.OK)
