@@ -9,6 +9,7 @@ import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.plantcare.mobile.dataconverter.DataConverter;
 import com.plantcare.mobile.dtoGlobal.*;
 import com.plantcare.mobile.exception.AppException;
 import com.plantcare.mobile.exception.ErrorCode;
@@ -38,10 +39,12 @@ public class GreenHousesControllerHTTPs {
     private GreenHousesHTTPsDataService greenHousesHTTPsDataService;
     @Value("${security.prepared-key}")
     private String presharedKey;
+    private final DataConverter dataConverter;
 
     public GreenHousesControllerHTTPs(GreenHousesService greenHousesService, GreenHousesHTTPsDataService greenHousesHTTPsDataService)  {
         this.greenHousesService = greenHousesService;
         this.greenHousesHTTPsDataService = greenHousesHTTPsDataService;
+        this.dataConverter = new DataConverter();
 
     }
 
@@ -118,7 +121,7 @@ public class GreenHousesControllerHTTPs {
                 greenhouse
         );
         for( GreenHouseDataServiceResponse greenHouse : greenhouse) {
-            greenHouse = getFieldsRecent(greenHouse);
+            greenHouse = dataConverter.getFieldsRecent(greenHouse);
         }
         return ApiResponse.<List<GreenHouseDataServiceResponse>>builder()
                 .data(greenhouse)
@@ -143,7 +146,7 @@ public class GreenHousesControllerHTTPs {
                 "get greenhouses success, data service response: {}",
                 greenhouse
         );
-        greenhouse= getFieldsRecent(greenhouse);
+        greenhouse= dataConverter.getFieldsRecent(greenhouse);
         return ApiResponse.<GreenHouseDataServiceResponse>builder()
                 .data(greenhouse)
                 .status(HttpStatus.OK)
@@ -296,78 +299,4 @@ public class GreenHousesControllerHTTPs {
         return request;
     }
 
-    public GreenHouseDataServiceResponse getFieldsRecent(GreenHouseDataServiceResponse needToConvert){
-        List<Field> fields = needToConvert.getFields();
-        if (fields == null || fields.isEmpty()) {
-            return needToConvert;
-        }
-//        public class Field {
-//            private List<Sensor> temperature_sensor;
-//            private List<Sensor> humidity_sensor;
-//            private List<Sensor> soil_moisture_sensor;
-//            private List<Sensor> light_sensor;
-//            private List<SensorStatus> fan_status;
-//            private List<SensorStatus> led_status;
-//            private List<SensorStatus> pump_status;
-//        }
-        for (Field field : fields) {
-            if (field.getTemperature_sensor() != null && !field.getTemperature_sensor().isEmpty()) {
-                field.setTemperature_sensor(
-                        field.getTemperature_sensor().stream()
-                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
-                                .limit(1)
-                                .toList()
-                );
-            }
-            if (field.getHumidity_sensor() != null && !field.getHumidity_sensor().isEmpty()) {
-                field.setHumidity_sensor(
-                        field.getHumidity_sensor().stream()
-                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
-                                .limit(1)
-                                .toList()
-                );
-            }
-            if (field.getSoil_moisture_sensor() != null && !field.getSoil_moisture_sensor().isEmpty()) {
-                field.setSoil_moisture_sensor(
-                        field.getSoil_moisture_sensor().stream()
-                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
-                                .limit(1)
-                                .toList()
-                );
-            }
-            if (field.getLight_sensor() != null && !field.getLight_sensor().isEmpty()) {
-                field.setLight_sensor(
-                        field.getLight_sensor().stream()
-                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
-                                .limit(1)
-                                .toList()
-                );
-            }
-            if (field.getFan_status() != null && !field.getFan_status().isEmpty()) {
-                field.setFan_status(
-                        field.getFan_status().stream()
-                                .sorted(Comparator.comparing(SensorStatus::getTimestamp).reversed())
-                                .limit(1)
-                                .toList()
-                );
-            }
-            if (field.getLed_status() != null && !field.getLed_status().isEmpty()) {
-                field.setLed_status(
-                        field.getLed_status().stream()
-                                .sorted(Comparator.comparing(SensorStatus::getTimestamp).reversed())
-                                .limit(1)
-                                .toList()
-                );
-            }
-            if (field.getPump_status() != null && !field.getPump_status().isEmpty()) {
-                field.setPump_status(
-                        field.getPump_status().stream()
-                                .sorted(Comparator.comparing(SensorStatus::getTimestamp).reversed())
-                                .limit(1)
-                                .toList()
-                );
-            }
-        }
-        return needToConvert;
-    }
 }

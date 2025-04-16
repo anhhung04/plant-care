@@ -5,10 +5,12 @@ import java.util.List;
 import java.util.Objects;
 
 import com.plantcare.mobile.clientsocket.ClientSocketSessionRegistry;
+import com.plantcare.mobile.dataconverter.DataConverter;
 import com.plantcare.mobile.dtoGlobal.Field;
 import com.plantcare.mobile.exception.AppException;
 import com.plantcare.mobile.exception.ErrorCode;
 import com.plantcare.mobile.greenhouses.dto.request.SubscribeRequest;
+import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
 import com.plantcare.mobile.greenhouses.feignclient.GreenHousesHTTPsDataService;
 import jakarta.transaction.Transactional;
 
@@ -42,6 +44,7 @@ public class GreenHousesService {
     private SimpMessagingTemplate messagingTemplate;
     private final ClientSocketSessionRegistry clientSocketSessionRegistry;
     private GreenHousesHTTPsDataService greenHousesHTTPsDataService;
+    private DataConverter dataConverter;
 
     // Update data tu dataservice
     public void updateGreenhouse(Object dataUpdate) {
@@ -74,6 +77,10 @@ public class GreenHousesService {
         greenHouse.setCreatedAt(LocalDateTime.now());
         GreenHouseResponse response = greenHouseMapper.toGreenHouseResponse(greenHousesRepository.save(greenHouse));
 
+        GreenHouseDataServiceResponse greenHouseDataServiceResponse = greenHousesHTTPsDataService.getGreenhouse(greenhouseId);
+        // Chuyển đổi dữ liệu từ GreenHouseDataServiceResponse sang định dạng mong muốn
+        greenHouseDataServiceResponse = dataConverter.getFieldsRecent(greenHouseDataServiceResponse);
+
         // 🔹 Lấy danh sách user đang subscribe greenhouseId này
         List<String> subscribers = clientSocketSessionRegistry.getSubscribers(greenhouseId);
         log.info("subscribers: {}", subscribers);
@@ -81,13 +88,13 @@ public class GreenHousesService {
         for (String userId : subscribers) {
             log.info("userID sub " + userId);
             try{
-                messagingTemplate.convertAndSend("/queue/greenhouse/"+userId.toString(), response);
+                messagingTemplate.convertAndSend("/queue/greenhouse/"+userId.toString(), greenHouseDataServiceResponse);
                 log.info("a");
             }
             catch (Exception e){
                 log.info(e.getMessage());
             }
-            log.info(response.toString());
+            log.info(greenHouseDataServiceResponse.toString());
             log.info("urlsend: /" + userId + "/queue/greenhouse");
 
         }
