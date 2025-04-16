@@ -24,7 +24,7 @@ public class ScheduledTaskService {
     private final GreenHousesHTTPsDataService greenHousesHTTPsDataService;
     private final GreenHousesService greenHousesService;
 
-    public ScheduledTask scheduleTask(String greenhouseId, Integer fieldIndex, Device device, Action action, LocalDateTime scheduledTime) {
+    public ScheduledTask scheduleTask(String greenhouseId, Integer fieldIndex, String device, Integer value, LocalDateTime scheduledTime) {
         // Kiểm tra xem greenhouseId có hợp lệ không
         greenHousesService.checkGreenHouse(greenhouseId);
         // Kiểm tra xem fieldIndex có hợp lệ không
@@ -33,7 +33,7 @@ public class ScheduledTaskService {
         task.setGreenhouseId(greenhouseId);
         task.setFieldIndex(fieldIndex);
         task.setDevice(device);
-        task.setAction(action);
+        task.setValue(value);
         task.setScheduledTime(scheduledTime);
         return scheduledTaskRepository.save(task);
     }
@@ -53,7 +53,7 @@ public class ScheduledTaskService {
                         task.getGreenhouseId(),
                         task.getFieldIndex(),
                         task.getDevice(),
-                        task.getAction()
+                        task.getValue()
                 );
                 task.setExecuted(true);
                 scheduledTaskRepository.save(task);

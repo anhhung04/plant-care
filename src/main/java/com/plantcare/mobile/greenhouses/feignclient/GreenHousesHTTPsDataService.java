@@ -5,6 +5,7 @@ import com.plantcare.mobile.dtoGlobal.Action;
 import com.plantcare.mobile.dtoGlobal.Device;
 import com.plantcare.mobile.dtoGlobal.Field;
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseDataServiceCreateRequest;
+import com.plantcare.mobile.greenhouses.dto.response.GreenHouseControlResponse;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
@@ -60,12 +61,12 @@ public interface GreenHousesHTTPsDataService {
             @RequestParam String end_time
     );
 
-    @PostMapping(value = "/{greenhouse_id}/fields/{field_index}/control",consumes = MediaType.APPLICATION_JSON_VALUE,  produces = MediaType.APPLICATION_JSON_VALUE)
-    String controlFieldDevice(
+    @PostMapping(value = "/{greenhouse_id}/fields/{field_index}/control", produces = MediaType.APPLICATION_JSON_VALUE)
+    GreenHouseControlResponse controlFieldDevice(
             @PathVariable String greenhouse_id,
             @PathVariable Integer field_index,
-            @RequestParam Device device,
-            @RequestParam Action action
+            @RequestParam String device,
+            @RequestParam Integer value
     );
 
 }

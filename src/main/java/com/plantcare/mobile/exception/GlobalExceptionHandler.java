@@ -22,9 +22,8 @@ public class GlobalExceptionHandler {
     private static final String MIN_ATTRIBUTE = "min";
 
     @ExceptionHandler(value = Exception.class)
-    ResponseEntity<com.plantcare.mobile.dtoGlobal.response.ApiResponse> handlingRuntimeException(
+    ResponseEntity<ApiResponse> handlingRuntimeException(
             RuntimeException exception) {
-        log.error("Exception: ", exception);
         ApiResponse apiResponse = new ApiResponse();
 
         apiResponse.setStatus(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode());

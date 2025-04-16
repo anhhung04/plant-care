@@ -1,12 +1,18 @@
 package com.plantcare.mobile.greenhouses.controller;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
-import com.plantcare.mobile.dtoGlobal.Action;
-import com.plantcare.mobile.dtoGlobal.Device;
-import com.plantcare.mobile.dtoGlobal.Field;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.plantcare.mobile.dtoGlobal.*;
 import com.plantcare.mobile.exception.AppException;
 import com.plantcare.mobile.exception.ErrorCode;
+import com.plantcare.mobile.greenhouses.dto.response.GreenHouseControlResponse;
 import com.plantcare.mobile.greenhouses.service.GreenHousesService;
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseDataServiceCreateRequest;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
@@ -89,7 +95,7 @@ public class GreenHousesControllerHTTPs {
 
     @Transactional
     @GetMapping(value = "/ds-get", consumes = "application/json",produces = "application/json")
-    public ApiResponse<List<GreenHouseResponse>> getGreenhouse(
+    public ApiResponse<List<GreenHouseDataServiceResponse>> getGreenhouse(
             @RequestParam String owner,
             @RequestParam String location,
             @RequestParam Integer offset,
@@ -111,10 +117,11 @@ public class GreenHousesControllerHTTPs {
                 "get greenhouses success, data service response: {}",
                 greenhouse
         );
-        List<GreenHouseResponse> greenHouseResponses = greenHousesService.getGreenHouse(owner, offset, limit).getContent();
-
-        return ApiResponse.<List<GreenHouseResponse>>builder()
-                .data(greenHouseResponses)
+        for( GreenHouseDataServiceResponse greenHouse : greenhouse) {
+            greenHouse = getFieldsRecent(greenHouse);
+        }
+        return ApiResponse.<List<GreenHouseDataServiceResponse>>builder()
+                .data(greenhouse)
                 .status(HttpStatus.OK)
                 .message("get greenhouse successful")
                 .success(true)
@@ -123,7 +130,7 @@ public class GreenHousesControllerHTTPs {
 
     @Transactional
     @GetMapping(value = "/ds-get/{greenhouse_id}", consumes = "application/json",produces = "application/json")
-    public ApiResponse<GreenHouseResponse> getGreenhouse(@PathVariable String greenhouse_id) {
+    public ApiResponse<GreenHouseDataServiceResponse> getGreenhouse(@PathVariable String greenhouse_id) {
         GreenHouseDataServiceResponse greenhouse = greenHousesHTTPsDataService.getGreenhouse(greenhouse_id);
         if (greenhouse == null) {
             log.info(
@@ -136,8 +143,9 @@ public class GreenHousesControllerHTTPs {
                 "get greenhouses success, data service response: {}",
                 greenhouse
         );
-        return ApiResponse.<GreenHouseResponse>builder()
-                .data(greenHousesService.getGreenHouse(greenhouse.getOwner(), 0, 10).getContent().get(0))
+        greenhouse= getFieldsRecent(greenhouse);
+        return ApiResponse.<GreenHouseDataServiceResponse>builder()
+                .data(greenhouse)
                 .status(HttpStatus.OK)
                 .message("get greenhouse successful")
                 .success(true)
@@ -218,26 +226,32 @@ public class GreenHousesControllerHTTPs {
         return buildResponse(response, "Get field history successful");
     }
 
-    @Transactional
-    @PostMapping(value = "ds-control-field/{greenhouse_id}/field/{field_index}", consumes = "application/json",produces = "application/json")
-    public ApiResponse<String> controlField(
+@PostMapping(value = "/ds-control-field/{greenhouse_id}/field/{field_index}")
+    public ApiResponse<GreenHouseControlResponse> controlField(
             @PathVariable String greenhouse_id,
             @PathVariable Integer field_index,
-            @RequestBody Device device,
-            @RequestBody Action action
+            @RequestParam String device,
+            @RequestParam Integer value
     ) {
-        if (device == null || action == null) {
-            log.info(
-                    "control field failed, device or action is null: {}",
-                    device + " " + action
-            );
-            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
-        }
-        String fieldResponse = greenHousesHTTPsDataService.controlFieldDevice(
+        log.info(
+                "control field, greenhouse_id: {}, field_index: {}, device: {}, action: {}",
                 greenhouse_id,
                 field_index,
                 device,
-                action
+                value
+        );
+        if (device == null || value == null) {
+            log.info(
+                    "control field failed, device or action is null: {}",
+                    device + " " + value
+            );
+            throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
+        }
+        GreenHouseControlResponse fieldResponse = greenHousesHTTPsDataService.controlFieldDevice(
+                greenhouse_id,
+                field_index,
+                device,
+                value
         );
         if (fieldResponse == null) {
             log.info(
@@ -246,17 +260,14 @@ public class GreenHousesControllerHTTPs {
             );
             throw new AppException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
-        log.info(
-                "control field success, data service response: {}",
-                fieldResponse
-        );
-        return ApiResponse.<String>builder()
+        return ApiResponse.<GreenHouseControlResponse>builder()
                 .data(fieldResponse)
                 .status(HttpStatus.OK)
                 .message("control field successful")
                 .success(true)
                 .build();
     }
+
     private <T> ApiResponse<T> buildResponse(T data, String message) {
         return ApiResponse.<T>builder()
                 .data(data)
@@ -285,4 +296,78 @@ public class GreenHousesControllerHTTPs {
         return request;
     }
 
+    public GreenHouseDataServiceResponse getFieldsRecent(GreenHouseDataServiceResponse needToConvert){
+        List<Field> fields = needToConvert.getFields();
+        if (fields == null || fields.isEmpty()) {
+            return needToConvert;
+        }
+//        public class Field {
+//            private List<Sensor> temperature_sensor;
+//            private List<Sensor> humidity_sensor;
+//            private List<Sensor> soil_moisture_sensor;
+//            private List<Sensor> light_sensor;
+//            private List<SensorStatus> fan_status;
+//            private List<SensorStatus> led_status;
+//            private List<SensorStatus> pump_status;
+//        }
+        for (Field field : fields) {
+            if (field.getTemperature_sensor() != null && !field.getTemperature_sensor().isEmpty()) {
+                field.setTemperature_sensor(
+                        field.getTemperature_sensor().stream()
+                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
+                                .limit(1)
+                                .toList()
+                );
+            }
+            if (field.getHumidity_sensor() != null && !field.getHumidity_sensor().isEmpty()) {
+                field.setHumidity_sensor(
+                        field.getHumidity_sensor().stream()
+                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
+                                .limit(1)
+                                .toList()
+                );
+            }
+            if (field.getSoil_moisture_sensor() != null && !field.getSoil_moisture_sensor().isEmpty()) {
+                field.setSoil_moisture_sensor(
+                        field.getSoil_moisture_sensor().stream()
+                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
+                                .limit(1)
+                                .toList()
+                );
+            }
+            if (field.getLight_sensor() != null && !field.getLight_sensor().isEmpty()) {
+                field.setLight_sensor(
+                        field.getLight_sensor().stream()
+                                .sorted(Comparator.comparing(Sensor::getTimestamp).reversed())
+                                .limit(1)
+                                .toList()
+                );
+            }
+            if (field.getFan_status() != null && !field.getFan_status().isEmpty()) {
+                field.setFan_status(
+                        field.getFan_status().stream()
+                                .sorted(Comparator.comparing(SensorStatus::getTimestamp).reversed())
+                                .limit(1)
+                                .toList()
+                );
+            }
+            if (field.getLed_status() != null && !field.getLed_status().isEmpty()) {
+                field.setLed_status(
+                        field.getLed_status().stream()
+                                .sorted(Comparator.comparing(SensorStatus::getTimestamp).reversed())
+                                .limit(1)
+                                .toList()
+                );
+            }
+            if (field.getPump_status() != null && !field.getPump_status().isEmpty()) {
+                field.setPump_status(
+                        field.getPump_status().stream()
+                                .sorted(Comparator.comparing(SensorStatus::getTimestamp).reversed())
+                                .limit(1)
+                                .toList()
+                );
+            }
+        }
+        return needToConvert;
+    }
 }

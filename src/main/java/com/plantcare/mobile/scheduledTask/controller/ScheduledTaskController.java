@@ -28,12 +28,12 @@ public class ScheduledTaskController {
     public ApiResponse<ScheduledTask> scheduleControlField(
             @RequestParam String greenhouseId,
             @RequestParam Integer fieldIndex,
-            @RequestParam Device device,
-            @RequestParam Action action,
+            @RequestParam String device,
+            @RequestParam Integer value,
             @RequestParam String scheduledTime // ISO-8601 format: yyyy-MM-ddTHH:mm:ss
     ) {
         LocalDateTime time = LocalDateTime.parse(scheduledTime);
-        ScheduledTask task = scheduledTaskService.scheduleTask(greenhouseId, fieldIndex, device, action, time);
+        ScheduledTask task = scheduledTaskService.scheduleTask(greenhouseId, fieldIndex, device, value, time);
         return ApiResponse.<ScheduledTask>builder()
                 .status(HttpStatus.OK)
                 .message("Scheduled task created successfully")

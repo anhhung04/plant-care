@@ -16,8 +16,8 @@ public class ScheduledTask {
 
     private String greenhouseId;
     private Integer fieldIndex;
-    private Device device;
-    private Action action;
+    private String device;
+    private Integer value;
     private LocalDateTime scheduledTime;
     private boolean executed = false;
 }
