@@ -1,26 +1,36 @@
-import React from 'react';
-import { Redirect, SplashScreen, Tabs } from 'expo-router';
-import { View, StyleSheet, TouchableOpacity } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { colors } from '@/assets/fonts/colors';
-import { fonts } from '@/assets/fonts/font';
+import React from "react";
+import { Redirect, Slot, SplashScreen, Tabs } from "expo-router";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { Feather } from "@expo/vector-icons";
+import { colors } from "@/assets/fonts/colors";
+import { fonts } from "@/assets/fonts/font";
 import { useState, createContext, useContext } from "react";
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Text, BottomNavigation } from 'react-native-paper';
-import { CommonActions } from '@react-navigation/native';
-import Dashboard from './dashboard';
-import Reminder from './reminder';
-import HomeScreen from '.';
-import Setting from './setting';
-import Profile from './profile';
-import { useAuth } from '@/src/context/AuthContext';
-import GardenSetting from './gsetting';
-import { useGarden } from '@/src/context/GreenHouse';
-import { G } from 'react-native-svg';
+import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { Text, BottomNavigation } from "react-native-paper";
+import { CommonActions } from "@react-navigation/native";
+import Dashboard from "./dashboard";
+import Reminder from "./reminder";
+import HomeScreen from ".";
+import Setting from "./setting";
+import Profile from "./profile";
+import { useAuth } from "@/src/context/AuthContext";
+import SettingTab from "./setting";
+import ConfigScreen from "./setting/[device_name]";
+import { useGarden } from "@/src/context/GreenHouse";
+import GardenSetting from "./gsetting";
+
 export const TabBarContext = createContext({
   showTabBar: () => {},
   hideTabBar: () => {},
 });
+
+export type SettingStackParamList = {
+  SettingTab: undefined;
+  ConfigScreen: { device_name: string };
+};
+
+const Stack = createNativeStackNavigator<SettingStackParamList>();
 
 export default function TabLayout() {
   const Tab = createBottomTabNavigator();
@@ -141,64 +151,78 @@ export default function TabLayout() {
                 <Feather name="bell" size={size} color={color} />
               </View>
             ),
-          }} 
+          }}
         />
-        <Tab.Screen 
-          name="index" 
+        <Tab.Screen
+          name="index"
           component={HomeScreen}
-          options={{ 
-            title: 'Trang chủ',
+          options={{
+            title: "Trang chủ",
             tabBarIcon: ({ color, size }) => (
               <Feather name="home" size={size} color={color} />
             ),
-          }} 
+          }}
         />
-        
-        <Tab.Screen 
-          name="setting" 
-          component={Setting}
-          options={{ 
-              title: 'Thiết bị',
+        <Tab.Screen
+          name="setting"
+          component={SettingStack}
+          options={{
+            title: "Thiết bị",
             tabBarIcon: ({ color, size }) => (
               <Feather name="settings" size={size} color={color} />
             ),
-          }} 
+          }}
         />
-        
-        <Tab.Screen 
-          name="profile" 
+        <Tab.Screen
+          name="profile"
           component={Profile}
-          options={{ 
-            title: 'Cá nhân',
+          options={{
+            title: "Cá nhân",
             tabBarIcon: ({ color, size }) => (
               <Feather name="user" size={size} color={color} />
             ),
-          }} 
+          }}
         />
-
       </Tab.Navigator>
     </TabBarContext.Provider>
   );
 }
 
+function SettingStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen
+        name="SettingTab"
+        component={SettingTab}
+        options={{ title: "Thiết bị", headerShown: false }}
+      />
+      <Stack.Screen
+        name="ConfigScreen"
+        component={ConfigScreen}
+        options={{ title: "Cài đặt thiết bị", headerShown: false }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 const styles = StyleSheet.create({
   tabBar: {
-    height:75,
+    height: 75,
     elevation: 0, // Bỏ shadow trên Android
-    backgroundColor: 'rgba(255, 255, 255, 0.6)', // Tab bar trong suốt
-    position: 'absolute',
+    backgroundColor: "rgba(255, 255, 255, 0.6)", // Tab bar trong suốt
+    position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
   },
   tabBarBackground: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)', // Nền trắng mờ
-     // Hình nền
+    backgroundColor: "rgba(255, 255, 255, 0.85)", // Nền trắng mờ
+    // Hình nền
   },
   tabBarLabel: {
     fontFamily: fonts.Regular,

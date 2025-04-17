@@ -4,70 +4,78 @@
   import { StatusBar,Text } from 'react-native';
   import { LoadingScreen } from './auth/waiting';
   import { GardenProvider } from '@/src/context/GreenHouse';
-
+  import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
   // Component chính để quản lý layout và điều hướng
 
+const queryClient = new QueryClient();
 
-  const RootLayoutNav = () => {
-    const authContext = useAuth();
-    const authState = authContext?.authState;
-    const isFirstTimeUser = authContext?.isFirstTimeUser;
-    const loading = authContext?.loading;
-    const [isDelayedLoading, setIsDelayedLoading] = useState(true); // Tracks delay
+const RootLayoutNav = () => {
+  const authContext = useAuth();
+  const authState = authContext?.authState;
+  const isFirstTimeUser = authContext?.isFirstTimeUser;
+  const loading = authContext?.loading;
+  const [isDelayedLoading, setIsDelayedLoading] = useState(true); // Tracks delay
 
-    // Handle the 2-second delay
-    useEffect(() => {
-      if (!loading) {
-        // If auth loading is done, wait 2 seconds before clearing the delayed loading state
-        const timer = setTimeout(() => {
-          setIsDelayedLoading(false);
-        }, 5000); // 2000ms = 2 seconds
+  // Handle the 2-second delay
+  useEffect(() => {
+    if (!loading) {
+      // If auth loading is done, wait 2 seconds before clearing the delayed loading state
+      const timer = setTimeout(() => {
+        setIsDelayedLoading(false);
+      }, 5000); // 2000ms = 2 seconds
 
-        // Cleanup timer if component unmounts or authLoading changes
-        return () => clearTimeout(timer);
-      }
-    }, [loading]);
-
-    // Show loading screen if either auth is loading or delay hasn't completed
-    if (loading || isDelayedLoading) {
-      return <LoadingScreen />; // Your loading component
+      // Cleanup timer if component unmounts or authLoading changes
+      return () => clearTimeout(timer);
     }
+  }, [loading]);
 
-      return (
-        <>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="auth/onboarding" />
-          <Stack.Screen name="auth/signup" />
-          <Stack.Screen name="auth/signin" />
-          <Stack.Screen name="auth/waiting" />
-          <Stack.Screen name="auth/forgot" />
-          <Stack.Screen name="(tabs)" />
-        </Stack>
-      </>
-      );
-    }
+  // Show loading screen if either auth is loading or delay hasn't completed
+  if (loading || isDelayedLoading) {
+    return <LoadingScreen />; // Your loading component
+  }
+
+  console.log("Rendering RootLayoutNav with:", {
+    authenticated: authState?.authenticated,
+    isFirstTimeUser,
+    loading,
+  });
+  return (
+    <React.Fragment>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="auth/onboarding" />
+        <Stack.Screen name="auth/signup" />
+        <Stack.Screen name="auth/signin" />
+        <Stack.Screen name="auth/waiting" />
+        <Stack.Screen name="auth/forgot" />
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+    </React.Fragment>
+  );
+};
 
 export default function RootLayout() {
       StatusBar.setTranslucent(true);
       StatusBar.setBackgroundColor('transparent');
       return (
         <AuthProvider>
-          <GardenProvider>
-            <RootLayoutNav />
-          </GardenProvider>
+          <QueryClientProvider client={queryClient}>
+            <GardenProvider>
+              <RootLayoutNav />
+            </GardenProvider>
+          </QueryClientProvider>
         </AuthProvider>
       );
 }
-    // useEffect(() => {
-    //   // Ngăn splash screen ẩn cho đến khi điều hướng hoàn tất
-    //   SplashScreen.preventAutoHideAsync();
-    //   if (isFirstLaunch) {
-    //     router.replace('/(auth)/onboarding');
-    //   } else if (!user) {
-    //     router.replace('/(auth)/signin'); // Nếu chưa đăng nhập, đi tới signin
-    //   } else {
-    //     router.replace('/(tabs)/(home)'); // Nếu đã đăng nhập, đi tới tabs
-    //   }
-    //   SplashScreen.hideAsync();
-    //   // Ẩn splash screen sau khi điều hướng
-    // }, [user, isFirstLaunch, router]);
+// useEffect(() => {
+//   // Ngăn splash screen ẩn cho đến khi điều hướng hoàn tất
+//   SplashScreen.preventAutoHideAsync();
+//   if (isFirstLaunch) {
+//     router.replace('/(auth)/onboarding');
+//   } else if (!user) {
+//     router.replace('/(auth)/signin'); // Nếu chưa đăng nhập, đi tới signin
+//   } else {
+//     router.replace('/(tabs)/(home)'); // Nếu đã đăng nhập, đi tới tabs
+//   }
+//   SplashScreen.hideAsync();
+//   // Ẩn splash screen sau khi điều hướng
+// }, [user, isFirstLaunch, router]);
