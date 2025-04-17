@@ -12,12 +12,13 @@ def predict_with_partial_input(partial_input: dict) -> str:
     ordered_input = full_input[column_order]
     input_scaled = scaler.transform(pd.DataFrame([ordered_input]))
     prediction = model.predict(input_scaled)[0]
-    return "BẬT" if prediction == 1 else "TẮT"
+    return "on" if prediction == 1 else "off"
 
-input_data = {
-    "Soil Moisture": 80,
-    "Temperature": 10,
-    "Air humidity (%)": 21
-}
-result = predict_with_partial_input(input_data)
-print("Dự đoán: ", result)
+if __name__ == "__main__":
+    input_data = {
+        "Soil Moisture": 80,
+        "Temperature": 10,
+        "Air humidity (%)": 21
+    }
+    result = predict_with_partial_input(input_data)
+    print("Dự đoán: ", result)

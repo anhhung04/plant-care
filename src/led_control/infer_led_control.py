@@ -15,14 +15,15 @@ def predict_led_on(partial_input: dict) -> str:
     input_scaled = scaler.transform(pd.DataFrame([ordered_input]))
     prediction = model.predict(input_scaled)[0]
 
-    return "BẬT" if prediction == 1 else "TẮT"
+    return "on" if prediction == 1 else "off"
 
-input_data = {
-    "Light_Intensity": 500,
-    "Temperature": 21.5,
-    "Humidity": 67,
-    "Minute_Of_Day": 510  # 8:30 sáng
-}
+if __name__ == "__main__":
+    input_data = {
+        "Light_Intensity": 500,
+        "Temperature": 21.5,
+        "Humidity": 67,
+        "Minute_Of_Day": 510  # 8:30 sáng
+    }
 
-result = predict_led_on(input_data)
-print(f"Kết quả dự đoán LED: {result}")
+    result = predict_led_on(input_data)
+    print(f"Kết quả dự đoán LED: {result}")
