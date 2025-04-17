@@ -15,6 +15,7 @@ import { useGarden } from '@/src/context/GreenHouse';
 import GardenSetting from './gsetting';
 import { SOCKET_URL } from '@/config';
 import { Client } from '@stomp/stompjs';
+import { socketEvents } from '@/src/services/SocketService';
 
 // Dữ liệu mẫu cho các thiết bị
 type DeviceIcon = "thermometer-outline" | "rainy-outline" | "earth-outline" | "sunny-outline" | "pie-chart-outline" ;// Icon của thiết bị
@@ -84,74 +85,89 @@ const HomeScreen: React.FC = () => {
       return () => blinkAnimation.stop();
   },[])
 
-  const userId: string = 'c670e06e-afa8-4d4f-8005-b7bea9b38054'; // Replace with actual user ID
-    const greenhouseIds: string = 'gh_6e69294a8d1943819ff4f69933837bef'; // Replace with actual greenhouse IDs 
-    const wsUrl = SOCKET_URL
-    const [messages, setMessages] = useState<string[]>([]);
-    const [connected, setConnected] = useState(false);
+  useEffect(() => {
+    const handleMessage = (data: any) => {
+      console.log("Received message from server:", data);
+      // Handle the message (e.g., update state or UI)
+    };
   
-    useEffect(() => {
-      const stompClient = new Client({
-        brokerURL: wsUrl,
-        connectHeaders: {
-          Authorization: `Bearer ${userId}`,
-        },
-        webSocketFactory: () => new WebSocket(wsUrl),
-        debug: (str) => console.log("HERE",str),
-        onConnect: () => {
-          var c = stompClient.publish({
-            destination: "/app/subscribe",
-            headers: {
-              Authorization: `Bearer ${userId}`,
-            },
-            body: JSON.stringify({ userId, greenhouseIds }),
-          });
-          var a = stompClient.subscribe(
-            "/queue/greenhouse/c670e06e-afa8-4d4f-8005-b7bea9b38054",
-            (message) => {
-              console.log("Received message:", message.body);
-              setMessages((prev) => [...prev, message.body]);
-            }
-          );
+    // Listen for the "message" event
+    socketEvents.on("message", handleMessage);
   
-          console.log(a);
-          console.log(c);
-          console.log("✅ WebSocket connected successfully!");
-          setConnected(true);
-        },
+    // Cleanup the listener on unmount
+    return () => {
+      socketEvents.off("message", handleMessage);
+    };
+  }, []);
+
+  // const userId: string = 'c670e06e-afa8-4d4f-8005-b7bea9b38054'; // Replace with actual user ID
+  //   const greenhouseIds: string = 'gh_6e69294a8d1943819ff4f69933837bef'; // Replace with actual greenhouse IDs 
+  //   const wsUrl = SOCKET_URL
+  //   const [messages, setMessages] = useState<string[]>([]);
+  //   const [connected, setConnected] = useState(false);
   
-        onDisconnect: () => {
-          console.warn("⚠️ WebSocket disconnected.");
-          setConnected(false);
-          stompClient.publish({
-            destination: "/app/unsubscribe",
-            headers: {
-              Authorization: `Bearer ${userId}`,
-            },
-            body: JSON.stringify({ userId, greenhouseIds }),
-          });
-        },
+  //   useEffect(() => {
+  //     const stompClient = new Client({
+  //       brokerURL: wsUrl,
+  //       connectHeaders: {
+  //         Authorization: `Bearer ${userId}`,
+  //       },
+  //       webSocketFactory: () => new WebSocket(wsUrl),
+  //       debug: (str) => console.log("HERE",str),
+  //       onConnect: () => {
+  //         var c = stompClient.publish({
+  //           destination: "/app/subscribe",
+  //           headers: {
+  //             Authorization: `Bearer ${userId}`,
+  //           },
+  //           body: JSON.stringify({ userId, greenhouseIds }),
+  //         });
+  //         var a = stompClient.subscribe(
+  //           "/queue/greenhouse/c670e06e-afa8-4d4f-8005-b7bea9b38054",
+  //           (message) => {
+  //             console.log("Received message:", message.body);
+  //             setMessages((prev) => [...prev, message.body]);
+  //           }
+  //         );
   
-        onStompError: (frame) => {
-          console.error("❌ STOMP error:", frame);
-        },
-        onWebSocketClose: () => {
-          console.warn("⚠️ WebSocket connection closed.");
-          setConnected(false);
-        },
-        onWebSocketError: (error) => {
-          console.error("❌ WebSocket error:", error);
-        },
-      });
+  //         console.log(a);
+  //         console.log(c);
+  //         console.log("✅ WebSocket connected successfully!");
+  //         setConnected(true);
+  //       },
   
-      stompClient.activate();
+  //       onDisconnect: () => {
+  //         console.warn("⚠️ WebSocket disconnected.");
+  //         setConnected(false);
+  //         stompClient.publish({
+  //           destination: "/app/unsubscribe",
+  //           headers: {
+  //             Authorization: `Bearer ${userId}`,
+  //           },
+  //           body: JSON.stringify({ userId, greenhouseIds }),
+  //         });
+  //       },
   
-      return () => {
-        stompClient.deactivate().catch((err) => {
-          console.error("❌ Error during WebSocket deactivation:", err);
-        });
-      };
-    }, [userId, greenhouseIds, wsUrl]);
+  //       onStompError: (frame) => {
+  //         console.error("❌ STOMP error:", frame);
+  //       },
+  //       onWebSocketClose: () => {
+  //         console.warn("⚠️ WebSocket connection closed.");
+  //         setConnected(false);
+  //       },
+  //       onWebSocketError: (error) => {
+  //         console.error("❌ WebSocket error:", error);
+  //       },
+  //     });
+  
+  //     stompClient.activate();
+  
+  //     return () => {
+  //       stompClient.deactivate().catch((err) => {
+  //         console.error("❌ Error during WebSocket deactivation:", err);
+  //       });
+  //     };
+  //   }, [userId, greenhouseIds, wsUrl]);
 
 
   const toggleNotification = () => {

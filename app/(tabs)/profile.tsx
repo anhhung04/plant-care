@@ -42,7 +42,7 @@ export default function Profile() {
 
   const {
       selectedGreenhouse,
-      fields,
+      selectedFieldIndex,
       selectedField, 
       selectField,
       clearSelectedOptions
@@ -99,7 +99,7 @@ export default function Profile() {
     setChangeAreaVisible(false);
     showTabBar();
     if (area) {
-      selectField(area);
+      selectField(area, selectedFieldIndex || 0);
     } else {
       // Handle the case when no field is selected (null)
       console.log("No Field selected");
@@ -311,7 +311,7 @@ export default function Profile() {
         visible={isChangeAreaVisible}
         onClose={(area?: Field) => { handleChangeArea(area); }}
         current={selectedField}
-        areas={fields}
+        areas={selectedGreenhouse.fields}
       />
       
     </SafeAreaView>

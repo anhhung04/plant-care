@@ -8,6 +8,8 @@ import { useEffect, useState } from 'react';
 import {DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { LineChart, yAxisSides } from "react-native-gifted-charts";
 import { fonts } from "@/assets/fonts/font";
+import { useGarden } from '@/src/context/GreenHouse';
+import { API_BASE_URL } from '@/config';
 
 
 interface Data {
@@ -92,48 +94,113 @@ const lightData_1 : Data[] = [
 
 const Dashboard: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState<Date>(new Date());
 
-  const [tempState, setTempState] = useState(temperatureData);
-  const [airState, setAirState] = useState(atmosphereData);
-  const [soilState , setSoilState] = useState(soilData);
-  const [lightState, setLightState] = useState(lightData);
+
+  const [tempState, setTempState] = useState<Data[]>(temperatureData);
+  const [airState, setAirState] = useState<Data[]>(atmosphereData);
+  const [soilState , setSoilState] = useState<Data[]>(soilData);
+  const [lightState, setLightState] = useState<Data[]>(lightData);
+
+  const { selectedGreenhouse } = useGarden();
 
   const [yAxisRanges, setYAxisRanges] = useState({
     temperature: { min: 0, max: 100 },
     atmosphere: { min: 0, max: 100 },
     soil: { min: 0, max: 100 },
     light: { min: 0, max: 100 },
-});
+  });
+
+  const parseData = (rawData: { timestamp: string; unit: string; value: number }[], selectedDate: Date): Data[] => {
+    return rawData
+      .filter((item) => {
+        const itemDate = new Date(item.timestamp);
+        return (
+          itemDate.getFullYear() === selectedDate.getFullYear() &&
+          itemDate.getMonth() === selectedDate.getMonth() &&
+          itemDate.getDate() === selectedDate.getDate()
+        );
+      }) // Filter data by the selected date
+      .filter((_, index) => index % 20 === 0) // Take every 10th data point
+      .map((item) => {
+        const date = new Date(item.timestamp);
+        const hours = date.getHours().toString().padStart(2, '0'); // Ensure 2-digit format
+        const minutes = date.getMinutes().toString().padStart(2, '0'); // Ensure 2-digit format
+        return {
+          value: item.value,
+          label: `${hours}:${minutes}`, // Format as "HH:mm"
+        };
+      });
+  };
+
+  const fetchData = async (selectedDate: Date) => {
+    try {
+      const response = await fetch(API_BASE_URL+'/greenhouses/ds-get-analyze/'+ selectedGreenhouse?.greenhouse_id,
+        { method: 'GET',
+          headers: {
+          'Content-Type': 'application/json',
+          // Add any other necessary headers here
+        }}
+      );
+      if (response.ok) {
+        const data = await response.json();
+        const temperatureRaw = data.data.fields[0].temperature_sensor.reverse();
+        const atmosphereRaw = data.data.fields[0].humidity_sensor.reverse();
+        const soilRaw = data.data.fields[0].soil_moisture_sensor.reverse();
+        const lightRaw = data.data.fields[0].light_sensor.reverse();
+
+        // Parse raw data into the required format
+        const parsedTemperatureData = parseData(temperatureRaw, selectedDate);
+        setTempState(parsedTemperatureData);
+        setAirState(parseData(atmosphereRaw,selectedDate));
+        setSoilState(parseData(soilRaw,selectedDate));
+        setLightState(parseData(lightRaw,selectedDate));
+      } else {
+        console.error('Failed request:', response);
+      }
+
+      // setTempState(data.temperature);
+      // setAirState(data.atmosphere);
+      // setSoilState(data.soil);
+      // setLightState(data.light);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
+  }
 
   useEffect(() => {
-      const calculateRange = (data: any[]) => {
+    fetchData(date);
+  }
+  , []);
+
+  useEffect(() => {
+      const calculateRange = async (data: any[]) => {
           if (data.length > 0) {
               const min = Math.floor(Math.min(...data.map((item) => item.value)) / 5) * 5;
               const max = Math.ceil(Math.max(...data.map((item) => item.value)) / 5) * 5;
-              console.log({min,max})
               return { min, max };
           }
           return { min: 0, max: 100 };
       };
 
-      setYAxisRanges({
-          temperature: calculateRange(tempState),
-          atmosphere: calculateRange(airState),
-          soil: calculateRange(soilState),
-          light: calculateRange(lightState),
-      });
+      const updateYAxisRanges = async () => {
+          setYAxisRanges({
+              temperature: await calculateRange(tempState),
+              atmosphere: await calculateRange(airState),
+              soil: await calculateRange(soilState),
+              light: await calculateRange(lightState),
+          });
+      };
+
+      updateYAxisRanges();
   }, [tempState, airState, soilState, lightState]);
 
-  const onChange = (event: any, selectedDate?: Date) => {
+  const onChange = async (event: any, selectedDate?: Date) => {
     if (selectedDate) {
       const currentDate = selectedDate;
       setDate(currentDate);
 
-      setTempState(temperatureData_1);
-      setAirState(atmosphereData_1);
-      setSoilState(soilData_1);
-      setLightState(lightData_1);
+      fetchData(currentDate);
     }
   };
 
@@ -172,10 +239,6 @@ const Dashboard: React.FC = () => {
             data={tempState}
             curved
             areaChart
-            animateOnDataChange
-            animationDuration={1000}
-            onDataChangeAnimationDuration={1000}
-            isAnimated= {true}
             hideDataPoints
             color="#FF5733"
             startFillColor="rgba(255, 87, 51, 0.5)"
@@ -183,7 +246,7 @@ const Dashboard: React.FC = () => {
             startOpacity={0.8}
             endOpacity={0.3}
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
-            thickness={3}
+            thickness={1}
             initialSpacing={12}
             yAxisLabelWidth={30}
             yAxisTextStyle={{ fontSize: 14, color: "gray" }}
@@ -191,8 +254,7 @@ const Dashboard: React.FC = () => {
             noOfSections={3}
             hideRules
             maxValue={yAxisRanges.temperature.max - yAxisRanges.temperature.min + 10}
-            width={300} // 
-            adjustToWidth= {true}
+            width={300}
             height={120} //
             yAxisColor={colors.axis}
             xAxisColor={colors.axis} 
@@ -207,17 +269,13 @@ const Dashboard: React.FC = () => {
             data={airState}
             curved
             areaChart
-            animateOnDataChange
-            animationDuration={1000}
-            onDataChangeAnimationDuration={1000}
-            isAnimated= {true}
             color="#073763"
             startFillColor="rgba(74, 106, 170, 0.5)"
             endFillColor="rgba(17, 64, 133, 0.2)"
             startOpacity={0.8}
             endOpacity={0.3}
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
-            thickness={3}
+            thickness={1}
             hideDataPoints
             initialSpacing={12}
             yAxisLabelWidth={30}
@@ -227,7 +285,6 @@ const Dashboard: React.FC = () => {
             maxValue={yAxisRanges.atmosphere.max-yAxisRanges.atmosphere.min + 10}
             noOfSections={3}
             height={120}
-            adjustToWidth={true}
             width={300}
             yAxisColor={colors.axis}
             xAxisColor={colors.axis}
@@ -242,17 +299,13 @@ const Dashboard: React.FC = () => {
             data={soilState}
             curved
             areaChart
-            animateOnDataChange
-            animationDuration={1000}
-            onDataChangeAnimationDuration={1000}
-            isAnimated= {true}
             color="rgba(38, 255, 0, 0.82)"
             startFillColor="rgba(84, 196, 78, 0.5)"
             endFillColor="rgba(28, 208, 52, 0.72)"
             startOpacity={0.8}
             endOpacity={0.3}
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
-            thickness={3}
+            thickness={1}
             hideDataPoints
             initialSpacing={12}
             yAxisLabelWidth={30}
@@ -262,7 +315,6 @@ const Dashboard: React.FC = () => {
             maxValue={yAxisRanges.soil.max-yAxisRanges.soil.min + 10}
             noOfSections={3}
             height={120}
-            adjustToWidth={true}
             width={300}
             yAxisColor={colors.axis}
             xAxisColor={colors.axis}
@@ -277,17 +329,13 @@ const Dashboard: React.FC = () => {
             data={lightState}
             curved
             areaChart
-            animateOnDataChange
-            animationDuration={1000}
-            onDataChangeAnimationDuration={1000}
-            isAnimated= {true}
             color="rgba(246, 255, 0, 0.75)"
             startFillColor="rgba(230, 235, 96, 0.5)"
             endFillColor="rgba(208, 198, 21, 0.58)" 
             startOpacity={0.8}
             endOpacity={0.3}
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
-            thickness={3}
+            thickness={1}
             hideDataPoints
             initialSpacing={12}
             yAxisLabelWidth={30}
@@ -297,7 +345,6 @@ const Dashboard: React.FC = () => {
             maxValue={yAxisRanges.light.max-yAxisRanges.light.min + 10}
             noOfSections={3}
             height={120}
-            adjustToWidth={true}
             width={300} 
             yAxisColor={colors.axis}
             xAxisColor={colors.axis}

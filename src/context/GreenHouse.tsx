@@ -4,6 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 import { API_BASE_URL, SOCKET_URL } from '@/config';
 import data from '../components/onboarding/data';
 import { Client } from '@stomp/stompjs';
+import { connectToSocket, disconnectFromSocket } from '../services/SocketService';
 
 
 export type Greenhouse = {
@@ -97,45 +98,13 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
     loadSavedState();
   }, []);
 
-  // Socket connection effect
-  // useEffect(() => {
-  //   if (selectedGreenhouse) {
-  //     // Connect to socket when greenhouse is selected
-  //     connectToSocket(selectedGreenhouse.greenhouse_id);
-      
-  //     // Handle messages from socket
-  //     const handleSocketMessage = (data: any) => {
-  //       // If the message contains fields data for our greenhouse
-  //       if (data && data.greenhouse_id === selectedGreenhouse.greenhouse_id && data.fields) {
-  //         updateFieldsData(data.fields);
-  //       }
-  //     };
-      
-  //     // Handle socket errors
-  //     const handleSocketError = (error: any) => {
-  //       console.error('Socket error:', error);
-  //       setError('Connection error. Reconnecting...');
-        
-  //       // Implement reconnection logic if needed
-  //       setTimeout(() => {
-  //         if (selectedGreenhouse) {
-  //           connectToSocket(selectedGreenhouse.greenhouse_id);
-  //         }
-  //       }, 5000); // Reconnect after 5 seconds
-  //     };
-      
-  //     // Add event listeners
-  //     socketEvents.on('message', handleSocketMessage);
-  //     socketEvents.on('error', handleSocketError);
-      
-  //     // Cleanup function
-  //     return () => {
-  //       disconnectFromSocket();
-  //       socketEvents.removeListener('message', handleSocketMessage);
-  //       socketEvents.removeListener('error', handleSocketError);
-  //     };
-  //   }
-  // }, [selectedGreenhouse]);
+  useEffect(() => {
+    if (selectedGreenhouse && selectedField && selectedFieldIndex !== null) {
+      // Connect to the socket with the selected greenhouse ID
+      connectToSocket(selectedGreenhouse.greenhouse_id);
+    }
+  }, [selectedGreenhouse, selectedField, selectedFieldIndex]);
+
   const fetchGreenhouses = async () => {
     setIsLoading(true);
     setError(null);

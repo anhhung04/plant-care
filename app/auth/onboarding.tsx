@@ -31,8 +31,6 @@ const OnboardingScreen = () => {
     },
   });
 
-  console.log('OnboardingScreen rendered');
-
   return (
     <View style={styles.container}>
       <Animated.FlatList
