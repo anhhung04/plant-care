@@ -17,6 +17,7 @@ import settingsMockData from "@/src/data/settings.mock.json";
 import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SettingStackParamList } from "../_layout";
+import { colors } from "@/assets/fonts/colors";
 
 interface DeviceType {
   id: number;
@@ -146,7 +147,7 @@ export default function SettingTab() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ecffe1",
+    backgroundColor: colors.bg,
     paddingHorizontal: 20,
     alignItems: "center",
     gap: 20,

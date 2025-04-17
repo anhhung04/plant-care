@@ -5,6 +5,7 @@
   import { LoadingScreen } from './auth/waiting';
   import { GardenProvider } from '@/src/context/GreenHouse';
   import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+  import React from 'react';
   // Component chính để quản lý layout và điều hướng
 
 const queryClient = new QueryClient();
@@ -33,12 +34,6 @@ const RootLayoutNav = () => {
   if (loading || isDelayedLoading) {
     return <LoadingScreen />; // Your loading component
   }
-
-  console.log("Rendering RootLayoutNav with:", {
-    authenticated: authState?.authenticated,
-    isFirstTimeUser,
-    loading,
-  });
   return (
     <React.Fragment>
       <Stack screenOptions={{ headerShown: false }}>
