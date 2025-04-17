@@ -1,10 +1,11 @@
 import joblib
 import pandas as pd
+import os
 
-model = joblib.load("models/model_rf.pkl")
-scaler = joblib.load("models/scaler.pkl")
-column_means = joblib.load("models/column_means.pkl")
-column_order = joblib.load("models/column_order.pkl")
+model = joblib.load(os.path.dirname(__file__) + "/models/model_rf.pkl")
+scaler = joblib.load(os.path.dirname(__file__) + "/models/scaler.pkl")
+column_means = joblib.load(os.path.dirname(__file__) + "/models/column_means.pkl")
+column_order = joblib.load(os.path.dirname(__file__) + "/models/column_order.pkl")
 
 def predict_with_partial_input(partial_input: dict) -> str:
     full_input = column_means.copy()

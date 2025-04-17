@@ -1,9 +1,10 @@
 import joblib
 import pandas as pd
+import os
 
-model = joblib.load("models/model_rf.pkl")
-scaler = joblib.load("models/scaler.pkl")
-column_order = joblib.load("models/column_order.pkl")
+model = joblib.load(os.path.dirname(__file__) + "/models/model_rf.pkl")
+scaler = joblib.load(os.path.dirname(__file__) + "/models/scaler.pkl")
+column_order = joblib.load(os.path.dirname(__file__) + "/models/column_order.pkl")
 
 def predict_fan(input_dict: dict, model, scaler, column_order):
     input_df = pd.DataFrame([input_dict])[column_order]
