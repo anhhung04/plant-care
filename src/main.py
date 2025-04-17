@@ -54,6 +54,7 @@ def check_and_control_devices():
         })
         
         for greenhouse in needed_check_greenhouses:
+            logger.info(f"Processing greenhouse: {greenhouse['greenhouse_id']}")
             for field_idx, field in enumerate(greenhouse.get("fields", [])):
                 temperature_data = field.get("temperature_sensor", {}).get("value", None)
                 humidity_data = field.get("humidity_sensor", None)
@@ -71,6 +72,7 @@ def check_and_control_devices():
                     else:
                         send_control(greenhouse["greenhouse"], field_idx, "pump", 0)
                     notify_backend("Change status of pump", f"Greenhouse {greenhouse['greenhouse']} - Field {field_idx}: {res}")
+                    logger.info(f"Pump control decision: {res}")
                 
                 if temperature_data and humidity_data:
                     res = predict_fan({
@@ -82,6 +84,7 @@ def check_and_control_devices():
                     else:
                         send_control(greenhouse["greenhouse"], field_idx, "fan", 0)
                     notify_backend("Change status of fan", f"Greenhouse {greenhouse['greenhouse']} - Field {field_idx}: {res}")
+                    logger.info(f"Fan control decision: {res}")
                 
                 if light_data and temperature_data and humidity_data:
                     res = predict_led_on({
@@ -95,6 +98,7 @@ def check_and_control_devices():
                     else:
                         send_control(greenhouse["greenhouse"], field_idx, "led", 0)
                     notify_backend("Change status of led", f"Greenhouse {greenhouse['greenhouse']} - Field {field_idx}: {res}")
+                    logger.info(f"LED control decision: {res}")
     except Exception as e:
         logger.error(f"Error in control loop: {e}")
 
