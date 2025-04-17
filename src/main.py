@@ -107,21 +107,22 @@ def check_and_control_devices(collection, scheduler: BackgroundScheduler):
         for greenhouse in needed_check_greenhouses:
             logger.info(f"Processing greenhouse: {greenhouse['greenhouse_id']}")
             for field_idx, field in enumerate(greenhouse.get("fields", [])):
-                temperature_data = field.get("temperature_sensor", {}).get("value", None)
-                humidity_data = field.get("humidity_sensor", None)
-                soil_moisture_data = field.get("soil_moisture_sensor", None)
-                light_data = field.get("light_sensor", None)
+                temperature_data = field.get("temperature_sensor", [{}])[0].get("value", None)
+                humidity_data = field.get("humidity_sensor", [{}])[0].get("value", None)
+                soil_moisture_data = field.get("soil_moisture_sensor", [{}])[0].get("value", None)
+                light_data = field.get("light_sensor", [{}])[0].get("value", None)
                 try:
                     for device in ["fan", "pump", "led"]:
                         device_config = field.metadata.get(f"config_{device}", None)
                         if not device_config: continue
                         if device_config["mode"] == "manual" and device_config["turn_off_after"]:
-                            lastest_change = field.get(f"{device}_status", {}).get("timestamp", None)
+                            lastest_change = field.get(f"{device}_status", [{}])[0].get("timestamp", None)
                             if not lastest_change: continue
                             lastest_change = datetime.fromisoformat(lastest_change)
                             turn_off_time = lastest_change + timedelta(minutes=device_config["turn_off_after"])
                             job_name = f"{greenhouse['greenhouse_id']}_{field_idx}_{device}_{get_timestamp(turn_off_time)}_off"
                             if turn_off_time < datetime.now() and not scheduler.get_job(job_name):
+                                logger.info(f"Scheduling turn off for {device} in greenhouse {greenhouse['greenhouse_id']} at {turn_off_time}")
                                 scheduler.add_job(
                                     send_control,
                                     'date',
@@ -137,6 +138,7 @@ def check_and_control_devices(collection, scheduler: BackgroundScheduler):
                                 turn_on_time = datetime.combine(datetime.now(), datetime.strptime(device_config["turn_on_at"], "%H:%M").time())
                                 job_name = f"{greenhouse['greenhouse_id']}_{field_idx}_{device}_{get_timestamp(turn_on_time)}_on"
                                 if not scheduler.get_job(job_name):
+                                    logger.info(f"Scheduling turn on for {device} in greenhouse {greenhouse['greenhouse_id']} at {turn_on_time}")
                                     scheduler.add_job(
                                         send_control,
                                         'date',
@@ -148,6 +150,7 @@ def check_and_control_devices(collection, scheduler: BackgroundScheduler):
                                 turn_off_time = turn_on_time + timedelta(minutes=device_config["turn_off_after"])
                                 job_name = f"{greenhouse['greenhouse_id']}_{field_idx}_{device}_{get_timestamp(turn_off_time)}_off"
                                 if not scheduler.get_job(job_name):
+                                    logger.info(f"Scheduling turn off for {device} in greenhouse {greenhouse['greenhouse_id']} at {turn_off_time}")
                                     scheduler.add_job(
                                         send_control,
                                         'date',
@@ -160,6 +163,7 @@ def check_and_control_devices(collection, scheduler: BackgroundScheduler):
                                 turn_on_time = datetime.combine(datetime.now(), datetime.strptime(device_config["turn_on_at"], "%H:%M").time())
                                 job_name = f"{greenhouse['greenhouse_id']}_{field_idx}_{device}_{get_timestamp(turn_on_time)}_on"
                                 if not scheduler.get_job(job_name):
+                                    logger.info(f"Scheduling turn on for {device} in greenhouse {greenhouse['greenhouse_id']} at {turn_on_time}")
                                     scheduler.add_job(
                                         send_control,
                                         'date',
@@ -171,6 +175,7 @@ def check_and_control_devices(collection, scheduler: BackgroundScheduler):
                                 turn_off_time = turn_on_time + timedelta(minutes=device_config["turn_off_after"])
                                 job_name = f"{greenhouse['greenhouse_id']}_{field_idx}_{device}_{get_timestamp(turn_off_time)}_off"
                                 if not scheduler.get_job(job_name):
+                                    logger.info(f"Scheduling turn off for {device} in greenhouse {greenhouse['greenhouse_id']} at {turn_off_time}")
                                     scheduler.add_job(
                                         send_control,
                                         'date',
@@ -185,6 +190,7 @@ def check_and_control_devices(collection, scheduler: BackgroundScheduler):
                                     turn_off_time = turn_on_time + timedelta(minutes=device_config["turn_off_after"])
                                     job_name = f"{greenhouse['greenhouse_id']}_{field_idx}_{device}_{get_timestamp(turn_off_time)}_off"
                                     if not scheduler.get_job(job_name):
+                                        logger.info(f"Scheduling turn off for {device} in greenhouse {greenhouse['greenhouse_id']} at {turn_off_time}")
                                         scheduler.add_job(
                                             send_control,
                                             'date',
@@ -202,10 +208,11 @@ def check_and_control_devices(collection, scheduler: BackgroundScheduler):
                                 device
                             )
                             prediction = PREDICT_FUNCS[device](input_data)
-                            if prediction == "on":
-                                send_control(greenhouse["greenhouse_id"], field_idx, device, 100, {"title": "Device Control", "content": f"Turned on {device} in greenhouse {greenhouse['greenhouse_id']}"})
-                            elif prediction == "off":
-                                send_control(greenhouse["greenhouse_id"], field_idx, device, 0, {"title": "Device Control", "content": f"Turned off {device} in greenhouse {greenhouse['greenhouse_id']}"})
+                            logger.info(f"Predicted {device} control: {prediction}")
+                            current_status = field.get(f"{device}_status", [{}])[0].get("value", None)
+                            current_status = "off" if current_status == 0 else "on"
+                            if current_status != prediction:
+                                send_control(greenhouse["greenhouse_id"], field_idx, device, 100 if prediction == "on" else 0, {"title": "Device Control", "content": f"Turned {prediction} {device} in greenhouse {greenhouse['greenhouse_id']}"})
                 except Exception:
                     pass
 
