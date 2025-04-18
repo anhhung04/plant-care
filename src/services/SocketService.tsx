@@ -1,6 +1,7 @@
 import { SOCKET_URL } from "@/config";
 import { Client } from "@stomp/stompjs";
 import { EventEmitter } from "events";
+import { Image } from "react-native-svg";
 
 export const socketEvents = new EventEmitter();
 
@@ -18,18 +19,19 @@ export const connectToSocket = (greenhouseId: string) => {
     connectHeaders: {
       Authorization: `Bearer ${userId}`,
     },
+    webSocketFactory: () => {
+      return new WebSocket(SOCKET_URL);
+    },
     debug: (str) => {
       console.log("DEBUG: ",str);
     },
-    heartbeatIncoming: 10000, // 10 seconds
-    heartbeatOutgoing: 10000,
     onConnect: () => {
       console.log("✅ WebSocket connection established");
 
       // Subscribe to the greenhouse queue
       const subscription = stompClient.subscribe(
         `/queue/greenhouse/${userId}`,
-        (message) => {
+        (message ) => {
           try {
             const data = JSON.parse(message.body);
             console.log("Received message:", data);
@@ -39,6 +41,7 @@ export const connectToSocket = (greenhouseId: string) => {
           }
         }
       );
+      console.log("Subscription:", subscription);
 
       if (subscription) {
         console.log("✅ Subscribed to greenhouse queue");
@@ -52,13 +55,14 @@ export const connectToSocket = (greenhouseId: string) => {
         greenhouseIds: [greenhouseId],
       };
 
-      stompClient.publish({
+      var checking=stompClient.publish({
         destination: "/app/subscribe",
         headers: {
           Authorization: `Bearer ${userId}`,
         },
         body: JSON.stringify(payload),
       });
+      console.log("Publish result:", checking);
     },
     onStompError: (frame) => {
       console.error("❌ STOMP error:", frame);
@@ -70,6 +74,16 @@ export const connectToSocket = (greenhouseId: string) => {
     },
     onWebSocketError: (event) => {
       console.error("❌ WebSocket error:", event);
+    },
+    onDisconnect: () => {
+      console.warn("⚠️ WebSocket disconnected.");
+      stompClient.publish({
+        destination: "/app/unsubscribe",
+        headers: {
+          Authorization: `Bearer ${userId}`,
+        },
+        body: JSON.stringify({ userId, greenhouseIds: [greenhouseId] }),
+      });
     }
   });
 

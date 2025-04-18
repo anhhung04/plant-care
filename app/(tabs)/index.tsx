@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated } from 'react-native';
-import { Switch, Card, Title, Paragraph, Button } from 'react-native-paper'; // Sử dụng react-native-paper cho giao diện đẹp hơn
+import { Switch, Card, Title, Paragraph, Button } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import styles from '@/src/styles/PageStyle';
 import { Feather } from '@expo/vector-icons';
@@ -10,23 +10,19 @@ import { Link, router } from 'expo-router';
 import { BottomSheetModal } from '@/src/components/NotiModal';
 import { NotificationItem, ReminderItem } from '@/src/utils/modal';
 import { TabBarContext } from './_layout';
-import { getRandomImage } from '@/src/utils/farmpic';
+import { getRandomImage, URL } from '@/src/utils/farmpic';
 import { useGarden } from '@/src/context/GreenHouse';
 import GardenSetting from './gsetting';
-import { SOCKET_URL } from '@/config';
-import { Client } from '@stomp/stompjs';
-import { socketEvents } from '@/src/services/SocketService';
 
 // Dữ liệu mẫu cho các thiết bị
-type DeviceIcon = "thermometer-outline" | "rainy-outline" | "earth-outline" | "sunny-outline" | "pie-chart-outline" ;// Icon của thiết bị
-type EquipIcon = "zap" | "wind" | "droplet"; // Icon của thiết bị
+type DeviceIcon = "thermometer-outline" | "rainy-outline" | "earth-outline" | "sunny-outline" | "pie-chart-outline";
+type EquipIcon = "zap" | "wind" | "droplet";
 
 const devices: { id: number; icon: DeviceIcon; name: string; status: boolean; value: string }[] = [
   { id: 1, icon:'thermometer-outline', name: 'Nhiệt độ', status: false, value: '37°C' },
   { id: 2, icon:'rainy-outline',name: 'Độ ẩm không khí', status: false, value: '50 %' },
   { id: 3, icon:'earth-outline',name: 'Độ ẩm đất', status: false, value: '50 %' },
   { id: 4, icon:'sunny-outline',name: 'Cường độ ánh sáng', status: false, value: '300 lux' },
-  //{ id: 5, icon:'pie-chart-outline',name: 'Độ pH', status: false, value: 'X xx' },
 ];
 
 const equipments : { id: number; icon: EquipIcon; name: string; status: boolean}[] = [
@@ -35,35 +31,42 @@ const equipments : { id: number; icon: EquipIcon; name: string; status: boolean}
   { id: 3, icon:'droplet',name: 'Bơm nước', status: true },
 ];
 
- const notifications: NotificationItem[] = ([
-    { id: '1', title: 'Quạt được bật thủ công', message: 'Cường độ 50%', time: '15:30, 06/01/2025' },
-    { id: '2', title: 'Quạt được tắt tự động', message: 'Cường độ 0%', time: '12:30, 06/01/2025' },
-    { id: '3', title: 'Tưới nước được bật tự động', message: 'Cường độ 100%', time: '10:30, 06/01/2025' },
-    { id: '4', title: 'Tưới nước được tắt tự động', message: 'Cường độ 0%', time: '08:30, 06/01/2025' },
-  ]);
-  
-  const reminders: ReminderItem[] = ([
-    // { id: '1', title: 'Họp nhóm lúc 14h00', dueDate: 'Hôm nay, 14:00', completed: false },
-    // { id: '2', title: 'Kiểm tra phân bón', dueDate: 'Hôm nay, 17:00', completed: false },
-  ]);
+const notifications: NotificationItem[] = ([
+  { id: '1', title: 'Quạt được bật thủ công', message: 'Cường độ 50%', time: '15:30, 06/01/2025' },
+  { id: '2', title: 'Quạt được tắt tự động', message: 'Cường độ 0%', time: '12:30, 06/01/2025' },
+  { id: '3', title: 'Tưới nước được bật tự động', message: 'Cường độ 100%', time: '10:30, 06/01/2025' },
+  { id: '4', title: 'Tưới nước được tắt tự động', message: 'Cường độ 0%', time: '08:30, 06/01/2025' },
+]);
 
+const reminders: ReminderItem[] = ([
+  // { id: '1', title: 'Họp nhóm lúc 14h00', dueDate: 'Hôm nay, 14:00', completed: false },
+  // { id: '2', title: 'Kiểm tra phân bón', dueDate: 'Hôm nay, 17:00', completed: false },
+]);
 const HomeScreen: React.FC = () => {
   const [noti, setNoti] = useState(false);
   const [deviceStates, setDeviceStates] = useState(devices);
   const [equipmentStates, setEquipmentStates] = useState(equipments);
-
   const [modalVisible, setModalVisible] = useState(false);
+  const [dataAgeState, setDataAgeState] = useState<'fresh' | 'stale'>('fresh');
+  const [previousSensorTimestamps, setPreviousSensorTimestamps] = useState<Record<string, number>>({});
 
   const { hideTabBar, showTabBar } = useContext(TabBarContext);
-  const [imageState, setImageState] = useState('');
+  const [imageState, setImageState] = useState(URL[0]);
 
   const opacityAnim = useRef(new Animated.Value(0)).current;
 
   // Lấy dữ liệu từ context greenhouse
-  const { selectedGreenhouse, selectedField, selectedFieldIndex } = useGarden();
+  const { 
+    selectedGreenhouse, 
+    selectedField, 
+    selectedFieldIndex, 
+    startPolling, 
+    stopPolling 
+  } = useGarden();
 
+  // Start the blinking animation for active indicators
   useEffect(() => {
-      setImageState(getRandomImage());
+    if (dataAgeState === 'fresh') {
       const blinkAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(opacityAnim, {
@@ -83,92 +86,88 @@ const HomeScreen: React.FC = () => {
       
       // Cleanup on unmount
       return () => blinkAnimation.stop();
-  },[])
-
+    } else {
+      // If data is stale, stop animation and set to solid opacity
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [dataAgeState]);
+  
+  // Check if selected field's sensor data has been updated
   useEffect(() => {
-    const handleMessage = (data: any) => {
-      console.log("Received message from server:", data);
-      // Handle the message (e.g., update state or UI)
+    if (!selectedField) return;
+    
+    // Function to check if sensor data has been updated
+    const checkDataFreshness = () => {
+      const now = Date.now();
+      let isUpdated = false;
+      
+      // Get all sensor arrays as a group for easier checking
+      const sensorGroups = [
+        { key: 'temperature', data: selectedField.temperature_sensor },
+        { key: 'humidity', data: selectedField.humidity_sensor },
+        { key: 'soil_moisture', data: selectedField.soil_moisture_sensor },
+        { key: 'light', data: selectedField.light_sensor },
+      ];
+      
+      // Check if any sensor group has new timestamps
+      for (const group of sensorGroups) {
+        if (group.data && group.data.length > 0) {
+          for (let i = 0; i < group.data.length; i++) {
+            const sensor = group.data[i];
+            const sensorKey = `${group.key}_${i}`;
+            const sensorTime = new Date(sensor.timestamp).getTime();
+            const prevTime = previousSensorTimestamps[sensorKey] || 0;
+            
+            // If timestamp has changed, data is being updated
+            if (sensorTime > prevTime) {
+              isUpdated = true;
+              
+              // Update the previous timestamp record
+              setPreviousSensorTimestamps(prev => ({
+                ...prev,
+                [sensorKey]: sensorTime
+              }));
+            }
+            
+            // If data is too old, mark as stale
+            if (now - sensorTime > MAX_DATA_AGE) {
+              setDataAgeState('stale');
+              return;
+            }
+          }
+        }
+      }
+      
+      // If we found updated data, mark as fresh
+      if (isUpdated) {
+        setDataAgeState('fresh');
+      }
     };
+    
+    // Check once immediately when selectedField changes
+    checkDataFreshness();
+    
+    // Set up an interval to check data freshness every few seconds
+    const checkInterval = setInterval(checkDataFreshness, 5000);
+    
+    return () => clearInterval(checkInterval);
+  }, [selectedField]);
   
-    // Listen for the "message" event
-    socketEvents.on("message", handleMessage);
-  
-    // Cleanup the listener on unmount
+  useEffect(() => {
+    if (selectedGreenhouse) {
+      startPolling();
+      setDataAgeState('fresh');
+    }
+    
+    // Cleanup function to stop polling when component unmounts
     return () => {
-      socketEvents.off("message", handleMessage);
+      stopPolling();
     };
-  }, []);
-
-  // const userId: string = 'c670e06e-afa8-4d4f-8005-b7bea9b38054'; // Replace with actual user ID
-  //   const greenhouseIds: string = 'gh_6e69294a8d1943819ff4f69933837bef'; // Replace with actual greenhouse IDs 
-  //   const wsUrl = SOCKET_URL
-  //   const [messages, setMessages] = useState<string[]>([]);
-  //   const [connected, setConnected] = useState(false);
-  
-  //   useEffect(() => {
-  //     const stompClient = new Client({
-  //       brokerURL: wsUrl,
-  //       connectHeaders: {
-  //         Authorization: `Bearer ${userId}`,
-  //       },
-  //       webSocketFactory: () => new WebSocket(wsUrl),
-  //       debug: (str) => console.log("HERE",str),
-  //       onConnect: () => {
-  //         var c = stompClient.publish({
-  //           destination: "/app/subscribe",
-  //           headers: {
-  //             Authorization: `Bearer ${userId}`,
-  //           },
-  //           body: JSON.stringify({ userId, greenhouseIds }),
-  //         });
-  //         var a = stompClient.subscribe(
-  //           "/queue/greenhouse/c670e06e-afa8-4d4f-8005-b7bea9b38054",
-  //           (message) => {
-  //             console.log("Received message:", message.body);
-  //             setMessages((prev) => [...prev, message.body]);
-  //           }
-  //         );
-  
-  //         console.log(a);
-  //         console.log(c);
-  //         console.log("✅ WebSocket connected successfully!");
-  //         setConnected(true);
-  //       },
-  
-  //       onDisconnect: () => {
-  //         console.warn("⚠️ WebSocket disconnected.");
-  //         setConnected(false);
-  //         stompClient.publish({
-  //           destination: "/app/unsubscribe",
-  //           headers: {
-  //             Authorization: `Bearer ${userId}`,
-  //           },
-  //           body: JSON.stringify({ userId, greenhouseIds }),
-  //         });
-  //       },
-  
-  //       onStompError: (frame) => {
-  //         console.error("❌ STOMP error:", frame);
-  //       },
-  //       onWebSocketClose: () => {
-  //         console.warn("⚠️ WebSocket connection closed.");
-  //         setConnected(false);
-  //       },
-  //       onWebSocketError: (error) => {
-  //         console.error("❌ WebSocket error:", error);
-  //       },
-  //     });
-  
-  //     stompClient.activate();
-  
-  //     return () => {
-  //       stompClient.deactivate().catch((err) => {
-  //         console.error("❌ Error during WebSocket deactivation:", err);
-  //       });
-  //     };
-  //   }, [userId, greenhouseIds, wsUrl]);
-
+  }, [selectedGreenhouse?.greenhouse_id]); // Restart polling if greenhouse ID changes
 
   const toggleNotification = () => {
     setNoti(!noti);
@@ -176,21 +175,20 @@ const HomeScreen: React.FC = () => {
     hideTabBar();
   }
 
-  const insets = useSafeAreaInsets();
-  const date = new Date();
-  const formattedDate = date.toLocaleDateString('en-GB'); 
-
   if (!selectedGreenhouse || !selectedField) {
-      return (
-          <GardenSetting/>
-      );
+    return (
+      <GardenSetting/>
+    );
   }
+
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={{...styles.container, paddingTop: insets.top + 6, paddingBottom:70+ insets.bottom}}>  
       {/* Header */}
+      
       <View style={{...styles.header, paddingBottom: 20}}> 
-        <Text style={{...styles.headingText}}>Xin chao!</Text>
+        <Text style={{...styles.headingText}}>Greenhouse 1</Text>
         <TouchableOpacity onPress={toggleNotification}>
           <Feather name="bell" size={28} color="orange" />
         </TouchableOpacity>
@@ -202,86 +200,93 @@ const HomeScreen: React.FC = () => {
           <Card.Cover source={{ uri: imageState }} />
           <View style={styles.overlay}>
             <Text style={styles.title}>Field {selectedFieldIndex}</Text>
-            <Text style={styles.subtitle}>{formattedDate}</Text>
+            <Text style={styles.subtitle}>
+                {new Date(selectedGreenhouse.updated_at).toLocaleDateString('en-GB')}{" "}
+                {new Date(new Date(selectedGreenhouse.updated_at).getTime() + 7 * 60 * 60 * 1000).toLocaleTimeString('en-GB')}
+            </Text>
           </View>
-          <TouchableOpacity style={styles.overlayButton} onPress={() => {setImageState(getRandomImage())}}>
-            <Feather name="refresh-ccw" size={30} color="orange" />
-          </TouchableOpacity>
-          {/* <Card.Actions style={styles.overlayButton}>
-            <Button textColor='orange' icon="refresh" mode='outlined' onPress={() => {}}>
-            
-            </Button>
-          </Card.Actions> */}
         </Card>
       </View>
 
       {/* Các chỉ số */}
-  <TouchableOpacity onPress={() => {router.push('/dashboard')}}>
-    <Card style={styles.card}>
-      <Card.Content style={{padding: 16}}>
-        <Title style={{...styles.headingText, paddingTop:10, paddingBottom: 3}}>Chỉ số</Title>
-        
-        {/* Temperature sensors */}
-        {selectedField.temperature_sensor.map((sensor, index) => (
-          <View key={`temp-${index}`} style={styles.deviceItem}>
-            <Ionicons name="thermometer-outline" size={24} color="orange" />
-            <Text style={styles.DetailText}>Nhiệt độ</Text>
-            <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
-            <Animated.View 
-              style={[
-                styles.statusDot,
-                { opacity: opacityAnim }
-              ]} 
-            />
-          </View>
-        ))}
-        
-        {/* Humidity sensors */}
-        {selectedField.humidity_sensor.map((sensor, index) => (
-          <View key={`humid-${index}`} style={styles.deviceItem}>
-            <Ionicons name="water-outline" size={24} color="blue" />
-            <Text style={styles.DetailText}>Độ ẩm không khí</Text>
-            <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
-            <Animated.View 
-              style={[
-                styles.statusDot,
-                { opacity: opacityAnim }
-              ]} 
-            />
-          </View>
-        ))}
-        
-        {/* Soil moisture sensors */}
-        {selectedField.soil_moisture_sensor.map((sensor, index) => (
-          <View key={`soil-${index}`} style={styles.deviceItem}>
-            <Ionicons name="leaf-outline" size={24} color="green" />
-            <Text style={styles.DetailText}>Độ ẩm đất</Text>
-            <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
-            <Animated.View 
-              style={[
-                styles.statusDot,
-                { opacity: opacityAnim }
-              ]} 
-            />
-          </View>
-        ))}
-        
-        {/* Light sensors */}
-        {selectedField.light_sensor.map((sensor, index) => (
-          <View key={`light-${index}`} style={styles.deviceItem}>
-            <Ionicons name="sunny-outline" size={24} color="yellow" />
-            <Text style={styles.DetailText}>Ánh sáng</Text>
-            <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
-            <Animated.View 
-              style={[
-                styles.statusDot,
-                { opacity: opacityAnim }
-              ]} 
-            />
-          </View>
-        ))}
-        </Card.Content>
-      </Card>
+      <TouchableOpacity onPress={() => {router.push('/dashboard')}}>
+        <Card style={styles.card}>
+          <Card.Content style={{padding: 16}}>
+            <Title style={{...styles.headingText, paddingTop:10, paddingBottom: 3}}>Chỉ số</Title>
+            
+            {/* Temperature sensors */}
+            {selectedField.temperature_sensor.map((sensor, index) => (
+              <View key={`temp-${index}`} style={styles.deviceItem}>
+                <Ionicons name="thermometer-outline" size={24} color="orange" />
+                <Text style={styles.DetailText}>Nhiệt độ</Text>
+                <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
+                <Animated.View 
+                  style={[
+                    styles.statusDot,
+                    { 
+                      opacity: opacityAnim,
+                      backgroundColor: dataAgeState === 'fresh' ? "green" : "yellow"
+                    }
+                  ]} 
+                />
+              </View>
+            ))}
+            
+            {/* Humidity sensors */}
+            {selectedField.humidity_sensor.map((sensor, index) => (
+              <View key={`humid-${index}`} style={styles.deviceItem}>
+                <Ionicons name="water-outline" size={24} color="blue" />
+                <Text style={styles.DetailText}>Độ ẩm không khí</Text>
+                <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
+                <Animated.View 
+                  style={[
+                    styles.statusDot,
+                    { 
+                      opacity: opacityAnim,
+                      backgroundColor: dataAgeState === 'fresh' ? "green" : "yellow" 
+                    }
+                  ]} 
+                />
+              </View>
+            ))}
+            
+            {/* Soil moisture sensors */}
+            {selectedField.soil_moisture_sensor.map((sensor, index) => (
+              <View key={`soil-${index}`} style={styles.deviceItem}>
+                <Ionicons name="leaf-outline" size={24} color="green" />
+                <Text style={styles.DetailText}>Độ ẩm đất</Text>
+                <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
+                <Animated.View 
+                  style={[
+                    styles.statusDot,
+                    { 
+                      opacity: opacityAnim,
+                      backgroundColor: dataAgeState === 'fresh' ? "green" : "yellow"
+                    }
+                  ]} 
+                />
+              </View>
+            ))}
+            
+            {/* Light sensors */}
+            {selectedField.light_sensor.map((sensor, index) => (
+              <View key={`light-${index}`} style={styles.deviceItem}>
+                <Ionicons name="sunny-outline" size={24} color="yellow" />
+                <Text style={styles.DetailText}>Ánh sáng</Text>
+                <Text style={styles.DetailValue}>{sensor.value} {sensor.unit}</Text>
+                <Animated.View 
+                  style={[
+                    styles.statusDot,
+                    { 
+                      opacity: opacityAnim,
+                      backgroundColor: dataAgeState === 'fresh' ? "green" : "yellow"
+                    }
+                  ]} 
+                />
+              </View>
+            ))}
+          </Card.Content>
+        </Card>
       </TouchableOpacity>
 
       {/* Thiết bị */}
@@ -290,51 +295,63 @@ const HomeScreen: React.FC = () => {
           <Card.Content style={{padding: 16}}>
             <Title style={{...styles.headingText, paddingTop:10, paddingBottom: 3}}>Thiết bị</Title>
             {selectedField.fan_status.map((status, index) => (
-          <View key={`fan-${index}`} style={styles.deviceItem}>
-            <MaterialCommunityIcons name="fan" size={24} color="cyan" />
-            <Text style={styles.DetailText}>Quạt</Text>
-            <Text style={styles.DetailValue}>{status.value ? "Bật" : "Tắt"}</Text>
-            <Animated.View 
-              style={[
-                styles.statusDot,
-                { opacity: opacityAnim,
-                  backgroundColor: status.value ? "green" : "red" }
-              ]} 
-            />
-          </View>
-        ))}
-        
-        {/* LED status */}
-        {selectedField.led_status.map((status, index) => (
-          <View key={`led-${index}`} style={styles.deviceItem}>
-            <Ionicons name="bulb-outline" size={24} color="gold" />
-            <Text style={styles.DetailText}>Đèn LED</Text>
-            <Text style={styles.DetailValue}>{status.value ? "Bật" : "Tắt"}</Text>
-            <Animated.View 
-              style={[
-                styles.statusDot,
-                { opacity: opacityAnim,
-                  backgroundColor: status.value ? "green" : "red" }
-              ]} 
-            />
-          </View>
-        ))}
-        
-        {/* Pump status */}
-        {selectedField.pump_status.map((status, index) => (
-          <View key={`pump-${index}`} style={styles.deviceItem}>
-            <Ionicons name="water" size={24} color="blue" />
-            <Text style={styles.DetailText}>Máy bơm</Text>
-            <Text style={styles.DetailValue}>{status.value ? "Bật" : "Tắt"}</Text>
-            <Animated.View 
-              style={[
-                styles.statusDot,
-                { opacity: opacityAnim,
-                  backgroundColor: status.value ? "green" : "red" }
-              ]} 
-            />
-          </View>
-        ))}
+              <View key={`fan-${index}`} style={styles.deviceItem}>
+                <MaterialCommunityIcons name="fan" size={24} color="cyan" />
+                <Text style={styles.DetailText}>Quạt</Text>
+                <Text style={styles.DetailValue}>{status.value ? `Bật Mức ${status.value}` : "Tắt"}</Text>
+                <Animated.View 
+                  style={[
+                    styles.statusDot,
+                    { 
+                      opacity: opacityAnim,
+                      backgroundColor: dataAgeState === 'fresh' 
+                        ? (status.value ? "green" : "red") 
+                        : "yellow"
+                    }
+                  ]} 
+                />
+              </View>
+            ))}
+            
+            {/* LED status */}
+            {selectedField.led_status.map((status, index) => (
+              <View key={`led-${index}`} style={styles.deviceItem}>
+                <Ionicons name="bulb-outline" size={24} color="gold" />
+                <Text style={styles.DetailText}>Đèn LED</Text>
+                <Text style={styles.DetailValue}>{status.value ? `Bật Mức ${status.value}` : "Tắt"}</Text>
+                <Animated.View 
+                  style={[
+                    styles.statusDot,
+                    { 
+                      opacity: opacityAnim,
+                      backgroundColor: dataAgeState === 'fresh' 
+                        ? (status.value ? "green" : "red") 
+                        : "yellow"
+                    }
+                  ]} 
+                />
+              </View>
+            ))}
+            
+            {/* Pump status */}
+            {selectedField.pump_status.map((status, index) => (
+              <View key={`pump-${index}`} style={styles.deviceItem}>
+                <Ionicons name="water" size={24} color="blue" />
+                <Text style={styles.DetailText}>Máy bơm</Text>
+                <Text style={styles.DetailValue}>{status.value ? `Bật Mức ${status.value}` : "Tắt"}</Text>
+                <Animated.View 
+                  style={[
+                    styles.statusDot,
+                    { 
+                      opacity: opacityAnim,
+                      backgroundColor: dataAgeState === 'fresh' 
+                        ? (status.value ? "green" : "red") 
+                        : "yellow"
+                    }
+                  ]} 
+                />
+              </View>
+            ))}
           </Card.Content>
         </Card>
       </TouchableOpacity>
@@ -346,7 +363,6 @@ const HomeScreen: React.FC = () => {
         reminder={reminders}
       />
     </View>
-    
   );
 };
 

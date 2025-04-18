@@ -86,6 +86,7 @@ const SwipeableItem = ({
   });
 
   return (
+    <>
     <View style={styles.itemContainer}>
       <Animated.View style={[styles.deleteButtonContainer, deleteButtonStyle]}>
         <TouchableOpacity 
@@ -136,6 +137,8 @@ const SwipeableItem = ({
         </Animated.View>
       </PanGestureHandler>
     </View>
+    
+    </>
   );
 };
 
@@ -190,9 +193,12 @@ const ReminderListScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   return (
+    <>
     <SafeAreaView style={{...styles.container, paddingBottom: insets.bottom + 70, paddingTop: insets.top}}>
-    <GestureHandlerRootView>
-      <SafeAreaView style={styles.container}>
+      <GestureHandlerRootView style={{flex: 1}}>
+        <View style={styles.header}>
+          <Text style={styles.headerTitle}>Nhắc nhở</Text>
+        </View>
         
         <View style={styles.reminderList}>
           {reminders.length > 0 ? (
@@ -218,11 +224,10 @@ const ReminderListScreen: React.FC = () => {
         >
           <AntDesign name="plus" size={34} color="white" />
         </TouchableOpacity>
-      </SafeAreaView>  
-    </GestureHandlerRootView>
-    <CreateReminder visible={isVisible} onClose={handleCreate} />
+      </GestureHandlerRootView>  
+      <CreateReminder visible={isVisible} onClose={handleCreate} />
     </SafeAreaView>
-    
+    </>
   );
 };
 

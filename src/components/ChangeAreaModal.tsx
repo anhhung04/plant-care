@@ -26,7 +26,7 @@ export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClo
   const translateY = useRef(new Animated.Value(height)).current;
   const modalHeight = height * 0.5; // Chừa lại 8% phía trên màn hình
   const [areaState, setAreaState] = useState<Field[]>(areas || []);
-  const [currentState, setCurrentState] = useState<Field>(current || '');
+  const [currentState, setCurrentState] = useState<number>(current || 0);
   // Set up pan responder để xử lý gesture vuốt
   const panResponder = useRef(
     PanResponder.create({
@@ -87,7 +87,7 @@ export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClo
     }).start();
   };
 
-  const hideModal = (area?: Field) => {
+  const hideModal = (area?: number) => {
     Animated.timing(translateY, {
       toValue: height,
       duration: 300,
@@ -130,14 +130,15 @@ export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClo
             <View style={styles.dragIndicator} />
             <ScrollView style={styles.cardContainer}>
             {areaState.map((area, index) => {
-                const isCurrent = area.id === currentState.id;
+                console.log("index: ",index," current: ", currentState);
+                const isCurrent = index === currentState;
                 return(
                 <TouchableOpacity 
                     style={[styles.card, isCurrent && styles.currentAreaCard ]}
                     key={index}
                     onPress={() => {
                         if (!isCurrent) {
-                          hideModal(area);
+                          hideModal(index);
                         }
                       }}
                     disabled={isCurrent}
@@ -149,7 +150,7 @@ export const ChangeAreaModal: React.FC<ChangeAreaModalProps> = ({ visible, onClo
                         />
                         <View style={styles.textOverlay}>
                             <Text style={[styles.title, isCurrent && styles.currentAreaName]}>
-                            {area.name}
+                            Field {index}
                             </Text>
                             {isCurrent && <Text style={styles.subtitle}>(Hiện tại)</Text>}
                         </View>

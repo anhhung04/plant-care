@@ -56,42 +56,6 @@ const lightData : Data[] = [
   { value: 600, label: "00:00" },
 ];
 
-const temperatureData_1 : Data[] = [
-  { value: 22, label: "04:00" }, // 24-hour format
-  { value: 23, label: "08:00" },
-  { value: 30, label: "12:00" },
-  { value: 30, label: "16:00" },
-  { value: 28, label: "20:00" },
-  { value: 22, label: "00:00" },
-];
-
-const atmosphereData_1 : Data[] = [
-{ value: 80, label: "04:00" }, // 24-hour format
-{ value: 84, label: "08:00" },
-{ value: 70, label: "12:00" },
-{ value: 75, label: "16:00" },
-{ value: 78, label: "20:00" },
-{ value: 89, label: "00:00" },
-];
-
-const soilData_1 : Data[] = [
-{ value: 70, label: "04:00" }, // 24-hour format
-{ value: 64, label: "08:00" },
-{ value: 60, label: "12:00" },
-{ value: 55, label: "16:00" },
-{ value: 78, label: "20:00" },
-{ value: 70, label: "00:00" },
-];
-
-const lightData_1 : Data[] = [
-{ value: 660, label: "04:00" }, // 24-hour format
-{ value: 834, label: "08:00" },
-{ value: 1000, label: "12:00" },
-{ value: 955, label: "16:00" },
-{ value: 770, label: "20:00" },
-{ value: 600, label: "00:00" },
-];
-
 const Dashboard: React.FC = () => {
   const insets = useSafeAreaInsets();
   const [date, setDate] = useState<Date>(new Date());
@@ -112,19 +76,24 @@ const Dashboard: React.FC = () => {
   });
 
   const parseData = (rawData: { timestamp: string; unit: string; value: number }[], selectedDate: Date): Data[] => {
-    return rawData
-      .filter((item) => {
-        const itemDate = new Date(item.timestamp);
-        return (
-          itemDate.getFullYear() === selectedDate.getFullYear() &&
-          itemDate.getMonth() === selectedDate.getMonth() &&
-          itemDate.getDate() === selectedDate.getDate()
-        );
-      }) // Filter data by the selected date
-      .filter((_, index) => index % 20 === 0) // Take every 10th data point
+    const filteredData = rawData.filter((item) => {
+      const itemDate = new Date(item.timestamp);
+      return (
+        itemDate.getFullYear() === selectedDate.getFullYear() &&
+        itemDate.getMonth() === selectedDate.getMonth() &&
+        itemDate.getDate() === selectedDate.getDate()
+      );
+    }); // Filter data by the selected date
+
+    const zoom = filteredData.length > 20 ? Math.floor(filteredData.length / 20) : 1; // Adjust the zoom level as needed
+    console.log('Filtered data length:', filteredData.length);
+    console.log('Zoom level:', zoom);
+
+    return filteredData
+      .filter((_, index) => index % zoom === 0) // Take every nth data point based on zoom
       .map((item) => {
         const date = new Date(item.timestamp);
-        const hours = date.getHours().toString().padStart(2, '0'); // Ensure 2-digit format
+        const hours = ((date.getHours() + 7) % 24).toString().padStart(2, '0'); // Adjust for GMT+7 and ensure 2-digit format
         const minutes = date.getMinutes().toString().padStart(2, '0'); // Ensure 2-digit format
         return {
           value: item.value,
@@ -224,10 +193,10 @@ const Dashboard: React.FC = () => {
       >  
         {/* Header */}
         <View style={{...stylesNew.header, paddingBottom: 20}}> 
-          <TouchableOpacity onPress={() => showDatepicker() }>
+          <TouchableOpacity onPress={() => showDatepicker() } style={{flexDirection: 'row', alignItems: 'center'}}>
             <Ionicons name="calendar-outline" size={34} color={colors.light} style={{paddingRight:5}}/>
+            <Text style={stylesNew.HeaderText}>{date.toLocaleDateString("en-GB")}</Text>
           </TouchableOpacity>
-          <Text style={stylesNew.HeaderText}>{date.toLocaleDateString("en-GB")}</Text>
           
         </View>
 
@@ -247,7 +216,7 @@ const Dashboard: React.FC = () => {
             endOpacity={0.3}
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
             thickness={1}
-            initialSpacing={12}
+            initialSpacing={18}
             yAxisLabelWidth={30}
             yAxisTextStyle={{ fontSize: 14, color: "gray" }}
             yAxisOffset={yAxisRanges.temperature.min -10}
@@ -277,7 +246,7 @@ const Dashboard: React.FC = () => {
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
             thickness={1}
             hideDataPoints
-            initialSpacing={12}
+            initialSpacing={18}
             yAxisLabelWidth={30}
             yAxisTextStyle={{ fontSize: 14, color: "gray" }}
             hideRules
@@ -307,7 +276,7 @@ const Dashboard: React.FC = () => {
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
             thickness={1}
             hideDataPoints
-            initialSpacing={12}
+            initialSpacing={18}
             yAxisLabelWidth={30}
             yAxisTextStyle={{ fontSize: 14, color: "gray" }}
             hideRules
@@ -337,7 +306,7 @@ const Dashboard: React.FC = () => {
             xAxisLabelTextStyle={{ fontSize: 12, color: "gray" }}
             thickness={1}
             hideDataPoints
-            initialSpacing={12}
+            initialSpacing={18}
             yAxisLabelWidth={30}
             yAxisTextStyle={{ fontSize: 14, color: "gray" }}
             hideRules
