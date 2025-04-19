@@ -29,5 +29,11 @@ class GreenhouseResponse(BaseModel):
 
 class FieldResponse(BaseModel):
     field_index: int
-    sensors: Dict[str, List[SensorData]]
+    sensors: Optional[Dict[str, List[SensorData]]] = None
     metadata: Dict[str, Any]
+
+class UpdateFieldMetadataRequest(BaseModel):
+    config_led: Optional[SensorConfig] = None
+    config_fan: Optional[SensorConfig] = None
+    config_pump: Optional[SensorConfig] = None
+    additional: Dict[str, Any] = Field(default_factory=dict)

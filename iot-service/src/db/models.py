@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
@@ -55,7 +55,40 @@ class GreenhouseField(BaseModel):
     metadata: Dict[str, Any] = Field(
         default_factory=dict, description="Additional field metadata"
     )
-
+ # in all modes, these fields are required:
+    #     id, name, mode, status, intensity
+    #
+    # in manual mode, there is an additional field: 
+    #     turn_off_after (required) is null or x minutes
+    #
+    # in scheduled mode, there are additional fields:
+    #     turn_on_at (required) is the time to turn on the device, format: "HH:MM"
+    #     turn_off_after (required) x minutes (null is not allowed)
+    #     repeat (required) is "today", "everyday" or "custom"
+    #     dates (required if repeat is "custom") is an array of dates, format: "YYYY-MM-DD"
+    #
+    # in automatic mode, there are no additional fields
+class SensorConfig(BaseModel):
+    mode: Literal["manual", "scheduled", "automatic"] = Field(
+        default="manual", description="Mode of operation for the sensor"
+    )
+    turn_off_after: Optional[int] = Field(
+        default=None,
+        description="Time in minutes to turn off the device after activation (manual mode only)",
+    )
+    turn_on_at: Optional[str] = Field(
+        default=None,
+        description="Time to turn on the device (scheduled mode only), format: 'HH:MM'",
+    )
+    repeat: Optional[Literal["today", "everyday", "custom"]] = Field(
+        default=None,
+        description="Repeat schedule for the device (scheduled mode only)",
+    )
+    dates: Optional[List[str]] = Field(
+        default=[],
+        description="List of dates for custom schedule (scheduled mode only), format: 'YYYY-MM-DD'",
+    )
+    
 
 class Greenhouse(BaseModel):
     greenhouse_id: str = Field(..., description="Unique identifier for the greenhouse")

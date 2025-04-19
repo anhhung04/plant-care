@@ -72,7 +72,10 @@ class GreenhouseRepository:
                         f"fields.{field_index}.{sensor_type}": {
                             "$each": [sensor_data],
                             "$position": 0
-                        },
+                        }
+                    },
+                    "$set": {
+                        "updated_at": datetime.utcnow()
                     }
                 },
             )
@@ -137,6 +140,14 @@ class GreenhouseRepository:
             "$or": [
                 {"greenhouse_id": greenhouse_id}, {"_id": object_id}
             ]
+        }, {
+            "fields.temperature_sensor": { "$slice": 10 },
+            "fields.humidity_sensor": { "$slice": 10 },
+            "fields.soil_moisture_sensor": { "$slice": 10 },
+            "fields.light_sensor": { "$slice": 10 },
+            "fields.led_status": { "$slice": 10 },
+            "fields.fan_status": { "$slice": 10 },
+            "fields.pump_status": { "$slice": 10 },
         })
         if greenhouse_dict:
             return Greenhouse(**greenhouse_dict)
@@ -159,7 +170,7 @@ class GreenhouseRepository:
         try:
             result = self.collection.update_one(
                 {"greenhouse_id": greenhouse_id},
-                {"$push": {"fields": field.model_dump()}}
+                {"$push": {"fields": field.model_dump()}, "$set": {"updated_at": datetime.utcnow()}}
             )
             field_index = len(self.collection.find_one({"greenhouse_id": greenhouse_id})["fields"]) - 1
             return field_index
@@ -188,7 +199,7 @@ class GreenhouseRepository:
         try:
             result = self.collection.update_one(
                 {"greenhouse_id": greenhouse_id},
-                {"$set": {f"fields.{field_index}": field.model_dump()}}
+                {"$set": {f"fields.{field_index}": field.model_dump(), "updated_at": datetime.utcnow()}}
             )
             return result.modified_count > 0
         except Exception as e:
@@ -199,7 +210,7 @@ class GreenhouseRepository:
         try:
             result = self.collection.update_one(
                 {"greenhouse_id": greenhouse_id},
-                {"$unset": {f"fields.{field_index}": ""}}
+                {"$unset": {f"fields.{field_index}": ""}, "$set": {"updated_at": datetime.utcnow()}}
             )
             return result.modified_count > 0
         except Exception as e:
@@ -212,7 +223,15 @@ class GreenhouseRepository:
             filter_obj["owner"] = owner
         if location:
             filter_obj["location"] = location
-        cursor = self.collection.find(filter_obj).sort("updated_at", -1).skip(offset).limit(limit)
+        cursor = self.collection.find(filter_obj,{
+            "fields.temperature_sensor": { "$slice": 10 },
+            "fields.humidity_sensor": { "$slice": 10 },
+            "fields.soil_moisture_sensor": { "$slice": 10 },
+            "fields.light_sensor": { "$slice": 10 },
+            "fields.led_status": { "$slice": 10 },
+            "fields.fan_status": { "$slice": 10 },
+            "fields.pump_status": { "$slice": 10 },
+        }).sort("updated_at", -1).skip(offset).limit(limit)
         if cursor is None:
             return []
         return [Greenhouse(**gh_dict) for gh_dict in cursor]

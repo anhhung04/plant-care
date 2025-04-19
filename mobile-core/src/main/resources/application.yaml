@@ -1,0 +1,30 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /mobileBE
+spring:
+  data:
+    mongodb:
+#      username: hothanhnha25062004
+#      password: hF09yiWZJHw5j4nx
+      database: mongodb
+      uri: ${MONGO_CONNECTION_STRING}
+    supabase:
+      datasource:
+              driver-class-name: org.postgresql.Driver
+              url: jdbc:postgresql://${SPBHOST}:${SPBPORT}/${SPBDATABASE}
+              username: ${SPBUSER}
+              password: ${SPBPASSWORD}
+  #      uri: mongodb+srv://hothanhnha25062004:hF09yiWZJHw5j4nx@cluster0.zw8ek.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${PGHOST}:${PGPORT}/${PGDATABASE}
+    username: ${PGUSER}
+    password: ${PGPASSWORD}
+
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+security:
+  prepared-key: ${SECURITY_PREPARE_KEY}

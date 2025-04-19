@@ -230,6 +230,52 @@ async def delete_field(
         )
     return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
 
+@router.patch(
+    "/{greenhouse_id}/fields/{field_index}", response_model=FieldResponse
+)
+async def update_field(
+    greenhouse_id: str,
+    field_index: int,
+    update_field_metadata: UpdateFieldMetadataRequest,
+    repo: GreenhouseRepository = Depends(get_repository),
+):
+    """Update metadata of a field in a greenhouse."""
+    try:
+        greenhouse = repo.get_greenhouse(greenhouse_id)
+        if not greenhouse:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Greenhouse {greenhouse_id} not found",
+            )
+
+        if field_index >= len(greenhouse.fields):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Field index {field_index} not found",
+            )
+
+        field = greenhouse.fields[field_index]
+        if update_field_metadata.config_led:
+            field.metadata["config_led"] = update_field_metadata.config_led
+        if update_field_metadata.config_fan:
+            field.metadata["config_fan"] = update_field_metadata.config_fan
+        if update_field_metadata.config_pump:
+            field.metadata["config_pump"] = update_field_metadata.config_pump
+        field.metadata.update(update_field_metadata.additional)
+        updated_field = repo.update_field(greenhouse_id, field_index, field)
+        if not updated_field:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update field",
+            )
+        return FieldResponse(
+            field_index=field_index,
+            metadata=field.metadata,
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)
+        )
 
 @router.get(
     "/{greenhouse_id}/fields/{field_index}/history", response_model=List[SensorData]

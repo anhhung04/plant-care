@@ -17,6 +17,7 @@ services:
     restart: unless-stopped
     networks:
       - iot
+      - prod
     depends_on:
       - iot-db
   backend:
@@ -24,6 +25,21 @@ services:
     ports:
       - "8080:8080"
     restart: unless-stopped
+    networks:
+      - prod
+
+  ml-service:
+    build: ./ml-service
+    restart: unless-stopped
+    networks:
+      - prod
+      - iot
+    depends_on:
+      - iot-db
+    env_file:
+      - ./.env
 networks:
   iot:
+    driver: bridge
+  prod:
     driver: bridge
