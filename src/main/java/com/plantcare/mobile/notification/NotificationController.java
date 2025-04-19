@@ -1,6 +1,7 @@
 package com.plantcare.mobile.notification;
 
 import com.plantcare.mobile.dtoGlobal.response.ApiResponse;
+import com.plantcare.mobile.notification.dto.request.FCMregister;
 import com.plantcare.mobile.notification.dto.request.NotificationCreationRequest;
 import com.plantcare.mobile.notification.dto.response.NotificationResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class NotificationController {
     private final FireBaseMessagingService notificationService;
+    private final FcmService fcmService;
 
 
     @PostMapping
@@ -54,5 +56,22 @@ public class NotificationController {
                     .data(null)
                     .build();
         }
+    }
+
+    @PostMapping("/register")
+    public ApiResponse<String> registerToken(@RequestBody FCMregister fcMregister){
+        String response= fcmService.saveToken(fcMregister);
+        if(response !=null){
+            return ApiResponse.<String>builder()
+                    .status(HttpStatusCode.valueOf(200))
+                    .message("Notification register succesfully")
+                    .data(response)
+                    .build();
+        }
+        return ApiResponse.<String>builder()
+                .status(HttpStatusCode.valueOf(200))
+                .message("Notification register failed")
+                .data(null)
+                .build();
     }
 }

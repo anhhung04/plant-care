@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "699764646353",
+    "project_id": "notificationplancare",
+    "storage_bucket": "notificationplancare.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:699764646353:android:df22bfcd13c9cdfdd540f0",
+        "android_client_info": {
+          "package_name": "com.plantcare"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCku5WItngpBAz2MnYUSZYlyOqslSuxTzA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
