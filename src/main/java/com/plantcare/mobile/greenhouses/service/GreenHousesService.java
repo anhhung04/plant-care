@@ -11,6 +11,7 @@ import com.plantcare.mobile.exception.AppException;
 import com.plantcare.mobile.exception.ErrorCode;
 import com.plantcare.mobile.greenhouses.dto.request.SubscribeRequest;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
+import com.plantcare.mobile.greenhouses.dto.response.GreenHouseFieldResponse;
 import com.plantcare.mobile.greenhouses.feignclient.GreenHousesHTTPsDataService;
 import jakarta.transaction.Transactional;
 
@@ -136,7 +137,7 @@ public class GreenHousesService {
 
     public void checkFieldIndex(String greenhouseId, Integer fieldIndex) {
         try {
-            Field field=greenHousesHTTPsDataService.getField(greenhouseId, fieldIndex);
+            GreenHouseFieldResponse field=greenHousesHTTPsDataService.getField(greenhouseId, fieldIndex);
             if (field == null) {
                 throw new AppException(ErrorCode.FIELD_NOT_FOUND);
             }

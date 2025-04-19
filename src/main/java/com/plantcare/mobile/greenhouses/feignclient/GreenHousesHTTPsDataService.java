@@ -7,6 +7,7 @@ import com.plantcare.mobile.dtoGlobal.Field;
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseDataServiceCreateRequest;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseControlResponse;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
+import com.plantcare.mobile.greenhouses.dto.response.GreenHouseFieldResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -38,10 +39,10 @@ public interface GreenHousesHTTPsDataService {
     );
 
     @GetMapping(value = "/{greenhouse_id}/fields", produces = MediaType.APPLICATION_JSON_VALUE)
-    List<Field> getFields(@PathVariable String greenhouse_id);
+    List<GreenHouseFieldResponse> getFields(@PathVariable String greenhouse_id);
 
     @GetMapping(value = "/{greenhouse_id}/fields/{field_index}", produces = MediaType.APPLICATION_JSON_VALUE)
-    Field getField(
+    GreenHouseFieldResponse getField(
             @PathVariable String greenhouse_id,
             @PathVariable Integer field_index
     );

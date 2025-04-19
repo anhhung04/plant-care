@@ -14,6 +14,7 @@ import com.plantcare.mobile.dtoGlobal.*;
 import com.plantcare.mobile.exception.AppException;
 import com.plantcare.mobile.exception.ErrorCode;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseControlResponse;
+import com.plantcare.mobile.greenhouses.dto.response.GreenHouseFieldResponse;
 import com.plantcare.mobile.greenhouses.service.GreenHousesService;
 import com.plantcare.mobile.greenhouses.dto.request.GreenHouseDataServiceCreateRequest;
 import com.plantcare.mobile.greenhouses.dto.response.GreenHouseDataServiceResponse;
@@ -205,8 +206,8 @@ public class GreenHousesControllerHTTPs {
 
     @Transactional
     @GetMapping(value = "ds-get-list-field/{greenhouse_id}", consumes = "application/json",produces = "application/json")
-    public ApiResponse<List<Field>> getListField(@PathVariable String greenhouse_id) {
-        List<Field> response = safeExecute(
+    public ApiResponse<List<GreenHouseFieldResponse>> getListField(@PathVariable String greenhouse_id) {
+        List<GreenHouseFieldResponse> response = safeExecute(
                 () -> greenHousesHTTPsDataService.getFields(greenhouse_id),
                 "Get fields failed"
         );
@@ -214,11 +215,11 @@ public class GreenHousesControllerHTTPs {
     }
 
     @GetMapping(value = "ds-get-field/{greenhouse_id}/field/{field_index}", consumes = "application/json",produces = "application/json")
-    public ApiResponse<Field> getField(
+    public ApiResponse<GreenHouseFieldResponse> getField(
             @PathVariable String greenhouse_id,
             @PathVariable Integer field_index
     ) {
-        Field response = safeExecute(
+        GreenHouseFieldResponse response = safeExecute(
                 () -> greenHousesHTTPsDataService.getField(greenhouse_id, field_index),
                 "Get field failed"
         );
