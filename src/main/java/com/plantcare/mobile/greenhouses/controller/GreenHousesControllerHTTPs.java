@@ -211,6 +211,9 @@ public class GreenHousesControllerHTTPs {
                 () -> greenHousesHTTPsDataService.getFields(greenhouse_id),
                 "Get fields failed"
         );
+        for( GreenHouseFieldResponse field : response) {
+            field= dataConverter.getFieldRecent(field);
+        }
         return buildResponse(response, "Get fields successful");
     }
 
@@ -223,6 +226,7 @@ public class GreenHousesControllerHTTPs {
                 () -> greenHousesHTTPsDataService.getField(greenhouse_id, field_index),
                 "Get field failed"
         );
+        response= dataConverter.getFieldRecent(response);
         return buildResponse(response, "Get field successful");
     }
 
