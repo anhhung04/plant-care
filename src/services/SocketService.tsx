@@ -4,7 +4,7 @@ import { EventEmitter } from "events";
 
 export const socketEvents = new EventEmitter();
 
-const userId = "c670e06e-afa8-4d4f-8005-b7bea9b38054";// Replace with your actual WebSocket URL
+const userId = "c670e06e-afa8-4d4f-8005-b7bea9b38054"; // Replace with your actual WebSocket URL
 
 let stompClient: Client;
 
@@ -19,7 +19,7 @@ export const connectToSocket = (greenhouseId: string) => {
       Authorization: `Bearer ${userId}`,
     },
     debug: (str) => {
-      console.log("DEBUG: ",str);
+      console.log("DEBUG: ", str);
     },
     heartbeatIncoming: 10000, // 10 seconds
     heartbeatOutgoing: 10000,
@@ -70,7 +70,7 @@ export const connectToSocket = (greenhouseId: string) => {
     },
     onWebSocketError: (event) => {
       console.error("❌ WebSocket error:", event);
-    }
+    },
   });
 
   stompClient.activate();
@@ -98,4 +98,4 @@ export const getSocketClient = () => {
 };
 export const getSocketEvents = () => {
   return socketEvents;
-}
+};

@@ -17,6 +17,14 @@ import { Calendar } from "react-native-calendars";
 import { useMutation } from "@tanstack/react-query";
 import { apiCall } from "@/src/utils/apiCall";
 import { useRouter } from "expo-router";
+import { useGarden } from "@/src/context/GreenHouse";
+interface ConfigType {
+  mode: string;
+  turn_off_after: number;
+  turn_on_at: string;
+  repeat: string;
+  dates: string[];
+}
 
 interface Props {
   selectedDates: { [key: string]: any };
@@ -54,9 +62,9 @@ const RadioButtonSectionWithCombobox: React.FC<Props> = ({
       >
         <RadioButtonItem value="today" label={<Text>Ngày hôm nay</Text>} />
         <RadioButtonItem value="everyday" label={<Text>Mỗi ngày</Text>} />
-        <RadioButtonItem value="repeat" label={<Text>Lặp lại vào </Text>} />
+        <RadioButtonItem value="custom" label={<Text>Lặp lại vào </Text>} />
       </RadioButtonGroup>
-      {option === "repeat" && (
+      {option === "custom" && (
         <View>
           <Calendar
             onDayPress={(day: any) => toggleDate(day.dateString)}
@@ -78,23 +86,70 @@ const ScheduledSetting: React.FC<{
   notifySave: boolean;
   setNotifySave: (notifySave: boolean) => void;
   currentSettings: string;
-}> = ({ device_name, notifySave, setNotifySave, currentSettings }) => {
+  deviceConfig: ConfigType | null;
+  deviceIntensity: number;
+}> = ({
+  device_name,
+  notifySave,
+  setNotifySave,
+  currentSettings,
+  deviceConfig,
+  deviceIntensity,
+}) => {
   const router = useRouter();
-  const [intensity, setIntensity] = useState("100");
-  const [option, setOption] = useState("today");
-  const [OffTime, setOffTime] = useState("0");
-  const [OnTime, setOnTime] = useState(getTimePlus30Minutes());
+  const [intensity, setIntensity] = useState(deviceIntensity ?? 0);
+  const [option, setOption] = useState(deviceConfig?.repeat ?? "today");
+  const [OffTime, setOffTime] = useState(deviceConfig?.turn_off_after ?? 0);
+  const [OnTime, setOnTime] = useState(
+    deviceConfig?.turn_on_at ?? getTimePlus30Minutes()
+  );
   const [show, setShow] = useState(false);
   const [selectedDates, setSelectedDates] = useState<{ [key: string]: any }>(
-    {}
+    deviceConfig?.dates ?? {}
   );
 
-  const saveSettingsMutation = useMutation({
+  const { selectedGreenhouse, selectedFieldIndex } = useGarden();
+
+  useEffect(() => {
+    if (deviceConfig) {
+      setIntensity(deviceIntensity);
+      setOption(deviceConfig.repeat);
+      setOffTime(deviceConfig.turn_off_after);
+      setOnTime(deviceConfig.turn_on_at);
+      setSelectedDates(deviceConfig.dates);
+    }
+  }, [deviceConfig]);
+
+  const saveSettingsMutationStatus = useMutation({
     mutationFn: async () => {
       return apiCall({
-        endpoint: `/settings/${device_name}`,
-        method: "PUT",
-        body: {},
+        endpoint: `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}/control?device=${device_name}&value=${intensity}`,
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      setNotifySave(false);
+      router.back();
+    },
+    onError: (error) => {
+      console.error("Error saving settings:", error);
+    },
+  });
+
+  const saveSettingsMutationConfig = useMutation({
+    mutationFn: async () => {
+      return apiCall({
+        endpoint: `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}`,
+        method: "PATCH",
+        body: {
+          [`config_${device_name}`]: {
+            mode: "scheduled",
+            turn_off_after: OffTime,
+            turn_on_at: OnTime,
+            repeat: option,
+            dates: selectedDates,
+          },
+        },
       });
     },
     onSuccess: () => {
@@ -103,17 +158,14 @@ const ScheduledSetting: React.FC<{
       router.back();
     },
     onError: (error) => {
-      //------------------------TEMP---------------------------------
-      // setNotifySave(false);
-      // router.push("/setting");
-      //-------------------------------------------------------------
       console.error("Error saving settings:", error);
     },
   });
 
   useEffect(() => {
     if (notifySave) {
-      saveSettingsMutation.mutate();
+      saveSettingsMutationStatus.mutate();
+      saveSettingsMutationConfig.mutate();
     }
   }, [notifySave]);
 
@@ -137,13 +189,13 @@ const ScheduledSetting: React.FC<{
   const handleChangeIntensity = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, "");
     const number = Math.max(0, Math.min(100, Number(numericValue)));
-    setIntensity(number.toString());
+    setIntensity(number);
   };
 
   const handleChangeOffTime = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, "");
     const number = Math.max(0, Math.min(100, Number(numericValue)));
-    setOffTime(number.toString());
+    setOffTime(number);
   };
 
   return (
@@ -158,7 +210,7 @@ const ScheduledSetting: React.FC<{
             <Text style={{ fontSize: 14, fontWeight: "bold" }}>Cường độ: </Text>
             <TextInput
               onChangeText={handleChangeIntensity}
-              value={intensity}
+              value={intensity.toString()}
               keyboardType="numeric"
               placeholder="Enter numbers only"
               placeholderTextColor="#999"
@@ -190,10 +242,10 @@ const ScheduledSetting: React.FC<{
                   alignItems: "center",
                 }}
               >
-                <Text>{formatTime(OnTime)}</Text>
+                <Text>{formatTime(OnTime as Date)}</Text>
                 {show && (
                   <DateTimePicker
-                    value={OnTime}
+                    value={OnTime as Date}
                     mode="time"
                     is24Hour={true}
                     display="default"
@@ -213,7 +265,7 @@ const ScheduledSetting: React.FC<{
             <Text style={{ fontSize: 14, fontWeight: "bold" }}>Tắt sau: </Text>
             <TextInput
               onChangeText={handleChangeOffTime}
-              value={OffTime}
+              value={OffTime.toString()}
               keyboardType="numeric"
               placeholder="Enter numbers only"
               placeholderTextColor="#999"

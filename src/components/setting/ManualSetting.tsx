@@ -14,12 +14,20 @@ import { apiCall } from "@/src/utils/apiCall";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useRouter } from "expo-router";
 import settingsDeviceNameMockData from "@/src/data/settings.device_name.json";
+import { useGarden } from "@/src/context/GreenHouse";
+interface ConfigType {
+  mode: string;
+  turn_off_after: number;
+  turn_on_at: string;
+  repeat: string;
+  dates: string[];
+}
 
 interface Props {
-  time: string;
+  time: number;
   option: string;
   setOption: (option: string) => void;
-  setTime: (value: string) => void;
+  setTime: (value: number) => void;
 }
 
 const RadioButtonSection: React.FC<Props> = ({
@@ -30,8 +38,8 @@ const RadioButtonSection: React.FC<Props> = ({
 }) => {
   const handleChangeTimeValue = (text: string) => {
     const numericValue = text.replace(/[^0-9]/g, "");
-    const value = Math.max(0, Math.min(100, Number(numericValue))).toString();
-    setTime(value.toString());
+    const value = Math.max(0, Math.min(100, Number(numericValue)));
+    setTime(value);
   };
 
   console.log("🔍 time:", time);
@@ -52,7 +60,7 @@ const RadioButtonSection: React.FC<Props> = ({
             <>
               <TextInput
                 onChangeText={handleChangeTimeValue}
-                value={option === "custom" ? time : "0"}
+                value={option === "custom" ? time.toString() : "0"}
                 keyboardType="numeric"
                 placeholder="Enter numbers only"
                 placeholderTextColor="#999"
@@ -80,62 +88,94 @@ const ManualSetting: React.FC<{
   notifySave: boolean;
   setNotifySave: (notifySave: boolean) => void;
   currentSettings: string;
-}> = ({ device_name, notifySave, setNotifySave, currentSettings }) => {
+  deviceConfig: ConfigType | null;
+  deviceIntensity: number;
+}> = ({
+  device_name,
+  notifySave,
+  setNotifySave,
+  currentSettings,
+  deviceConfig,
+  deviceIntensity,
+}) => {
   const router = useRouter();
+  const { selectedGreenhouse, selectedFieldIndex } = useGarden();
 
-  const { data: settings } = useQuery<any>({
-    queryKey: ["settings", device_name],
-    queryFn: () => apiCall({ endpoint: `/settings/${device_name}` }),
-    enabled: currentSettings === "manual",
-  });
-
-  console.log(settings);
+  // const { data: settings } = useQuery<any>({
+  //   queryKey: ["settings", device_name],
+  //   queryFn: () => apiCall({ endpoint: `/settings/${device_name}` }),
+  //   enabled: currentSettings === "manual",
+  // });
 
   const [states, setState] = useState({
-    status: settingsDeviceNameMockData.status,
-    intensity: settingsDeviceNameMockData.intensity,
+    status: deviceIntensity > 0 ? true : false,
+    intensity: deviceIntensity ?? 0,
   });
-  const [option, setOption] = useState(settingsDeviceNameMockData.option);
-  const [time, setTime] = useState(settingsDeviceNameMockData.time);
+  const [option, setOption] = useState(
+    deviceConfig?.turn_off_after === 0 ? "never" : "custom"
+  );
+
+  const [time, setTime] = useState(deviceConfig?.turn_off_after ?? 0);
 
   useEffect(() => {
-    if (settings && currentSettings === "manual") {
-      setState({ status: settings.status, intensity: settings.intensity });
-      setOption(settings.option);
-      setTime(settings.time);
+    if (deviceConfig) {
+      setOption(deviceConfig.turn_off_after === 0 ? "never" : "custom");
+      setTime(deviceConfig.turn_off_after);
     }
-  }, [settings, currentSettings]);
+  }, [deviceConfig]);
 
-  const saveSettingsMutation = useMutation({
+  const updatedStatus = states.status ? states.intensity : 0;
+
+  // useEffect(() => {
+  //   if (settings && currentSettings === "manual") {
+  //     setState({ status: settings.status, intensity: settings.intensity });
+  //     setOption(settings.option);
+  //     setTime(settings.time);
+  //   }
+  // }, [settings, currentSettings]);
+
+  const saveSettingsMutationStatus = useMutation({
     mutationFn: async () => {
       return apiCall({
-        endpoint: `/settings/${device_name}`,
-        method: "PUT",
+        endpoint: `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}/control?device=${device_name}&value=${updatedStatus}`,
+        method: "POST",
+      });
+    },
+    onSuccess: () => {
+      setNotifySave(false);
+      router.back();
+    },
+    onError: (error) => {
+      console.error("Error saving settings:", error);
+    },
+  });
+
+  const saveSettingsMutationConfig = useMutation({
+    mutationFn: async () => {
+      return apiCall({
+        endpoint: `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}`,
+        method: "PATCH",
         body: {
-          status: states.status,
-          intensity: states.intensity,
-          option,
-          time,
+          [`config_${device_name}`]: {
+            mode: "manual",
+            turn_off_after: option === "never" ? 0 : time,
+          },
         },
       });
     },
     onSuccess: () => {
       setNotifySave(false);
-      console.log("🔍 saveSettingsMutation.mutate");
       router.back();
     },
     onError: (error) => {
-      //------------------------TEMP---------------------------------
-      // setNotifySave(false);
-      // router.push("/setting");
-      //-------------------------------------------------------------
       console.error("Error saving settings:", error);
     },
   });
 
   useEffect(() => {
     if (notifySave) {
-      saveSettingsMutation.mutate();
+      saveSettingsMutationStatus.mutate();
+      saveSettingsMutationConfig.mutate();
     }
   }, [notifySave]);
 
@@ -151,7 +191,7 @@ const ManualSetting: React.FC<{
     const number = Math.max(0, Math.min(100, Number(numericValue)));
     setState((prev) => ({
       ...prev,
-      intensity: number.toString(),
+      intensity: number,
     }));
   };
 

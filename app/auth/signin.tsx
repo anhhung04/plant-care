@@ -11,9 +11,9 @@ import { colors } from "@/assets/fonts/colors";
 import styles from "@/src/styles/AuthStyle";
 
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { router } from 'expo-router';
+import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { useAuth } from "@/src/context/AuthContext";
 
 const LoginScreen = () => {
@@ -23,50 +23,44 @@ const LoginScreen = () => {
   const [password, setPassword] = useState("");
   const authContext = useAuth();
   const onLogin = authContext?.onLogin;
-  
+
   const [secureEntery, setSecureEntery] = useState(true);
 
   const handleGoBack = () => {
-    router.push('/auth/onboarding');
+    router.push("/auth/onboarding");
   };
 
   const handleSignup = () => {
-    router.push('/auth/signup');
+    router.push("/auth/signup");
     //navigation.navigate("(auth)/signup");
   };
-  
+
   const handleSignin = () => {
     const res = signIn();
-    router.push('/(tabs)');
+    router.push("/(tabs)");
   };
 
   const signIn = async () => {
     if (onLogin) {
-      const response = await onLogin(email, password);  
+      const response = await onLogin(email, password);
       if (response.error) {
         alert(response.msg);
-      }
-      else return response
+      } else return response;
     } else {
       console.error("onLogin function error");
     }
-  }
-
-
+  };
 
   const insets = useSafeAreaInsets();
   return (
-    <View style={{
-      ...styles.container,
-      paddingTop: insets.top,
-
-    }}>
+    <View
+      style={{
+        ...styles.container,
+        paddingTop: insets.top,
+      }}
+    >
       <TouchableOpacity style={styles.backButtonWrapper} onPress={handleGoBack}>
-        <Feather
-          name={"arrow-left"}
-          color={colors.primary}
-          size={25}
-        />
+        <Feather name={"arrow-left"} color={colors.primary} size={25} />
       </TouchableOpacity>
       <View style={styles.textContainer}>
         <Text style={styles.headingText}>Chào Mừng,</Text>
@@ -103,12 +97,16 @@ const LoginScreen = () => {
             <Feather name={"eye"} size={20} color={colors.secondary} />
           </TouchableOpacity>
         </View>
-        <TouchableOpacity style={{alignSelf: 'flex-end' , paddingRight:20 }} onPress={() => router.push("/auth/forgot")}>
-          <Text style={styles.forgotPasswordText}>
-            Quên mật khẩu?
-            </Text>
+        <TouchableOpacity
+          style={{ alignSelf: "flex-end", paddingRight: 20 }}
+          onPress={() => router.push("/auth/forgot")}
+        >
+          <Text style={styles.forgotPasswordText}>Quên mật khẩu?</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.loginButtonWrapper} onPress={handleSignin}>
+        <TouchableOpacity
+          style={styles.loginButtonWrapper}
+          onPress={handleSignin}
+        >
           <Text style={styles.loginText}>Đăng nhập</Text>
         </TouchableOpacity>
         <View style={styles.footerContainer}>
@@ -123,4 +121,3 @@ const LoginScreen = () => {
 };
 
 export default LoginScreen;
-

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useLayoutEffect } from "react";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import {
@@ -9,18 +9,44 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { RadioButtonGroup, RadioButtonItem } from "expo-radio-button";
 import ManualSetting from "@/src/components/setting/ManualSetting";
 import ScheduledSetting from "@/src/components/setting/ScheduledSetting";
 import AutomaticSetting from "@/src/components/setting/AutomaticSetting";
+import { TabBarContext } from "../_layout";
+import { Field, useGarden } from "@/src/context/GreenHouse";
+import { useQuery } from "@tanstack/react-query";
+import { API_GREENHOUSE_URL } from "@/config";
+import { apiCall } from "@/src/utils/apiCall";
 
 const deviceNameConst = {
   led: "Đèn Led",
   fan: "Quạt",
   pump: "Bơm Nước",
 };
+
+interface DeviceType {
+  name: string;
+  mode: string;
+  status: boolean;
+  intensity: number;
+}
+
+interface ConfigType {
+  mode: string;
+  turn_off_after: number;
+  turn_on_at: string;
+  repeat: string;
+  dates: string[];
+}
+
+interface DeviceList {
+  config_led: ConfigType;
+  config_fan: ConfigType;
+  config_pump: ConfigType;
+}
 
 const RadioButtonSection: React.FC<{
   initialValue: string;
@@ -67,16 +93,59 @@ const RadioButtonSection: React.FC<{
 
 export default function ConfigScreen() {
   const route = useRoute();
-  const { device_name } = route.params as { device_name: string }; // 👈 CHỈNH Ở ĐÂY
+  const { device_name } = route.params as { device_name: string };
   const deviceName = device_name as string;
-  const initialValue = "manual";
+  const [deviceConfig, setDeviceConfig] = useState<ConfigType | null>(null);
+  const initialValue = deviceConfig?.mode ?? "manual";
   const router = useRouter();
   const [option, setOption] = useState(initialValue);
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const [notifySave, setNotifySave] = useState(false);
+  const { hideTabBar, showTabBar } = useContext(TabBarContext);
+  const { selectedGreenhouse, selectedField, selectedFieldIndex } = useGarden();
+  const [deviceStatus, setDeviceStatus] = useState<Field | null>(null);
 
-  console.log("🔍 deviceName:", deviceName);
+  const { data, isSuccess, isError } = useQuery<any>({
+    queryKey: [
+      "settings",
+      selectedGreenhouse?.greenhouse_id,
+      selectedFieldIndex,
+    ],
+    queryFn: () =>
+      apiCall({
+        endpoint: `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}`,
+      }),
+    enabled:
+      !!selectedGreenhouse?.greenhouse_id &&
+      selectedFieldIndex !== null &&
+      selectedFieldIndex !== undefined,
+  });
+
+  useEffect(() => {
+    if (data) {
+      console.log("settings", data.metadata);
+      if (deviceName === "led") {
+        setDeviceConfig(data.metadata.config_led);
+      } else if (deviceName === "fan") {
+        setDeviceConfig(data.metadata.config_fan);
+      } else if (deviceName === "pump") {
+        setDeviceConfig(data.metadata.config_pump);
+      }
+      setDeviceStatus(data.sensors);
+      setOption(initialValue);
+    }
+  }, [data]);
+
+  useEffect(() => {
+    hideTabBar();
+
+    return () => {
+      showTabBar();
+    };
+  }, []);
+
+  console.log("deviceName:", deviceName);
 
   let initialSettings;
 
@@ -88,6 +157,11 @@ export default function ConfigScreen() {
           device_name={deviceName}
           notifySave={notifySave}
           setNotifySave={setNotifySave}
+          deviceConfig={deviceConfig}
+          deviceIntensity={
+            deviceStatus?.[`${deviceName}_status` as keyof Field]?.[0]?.value ??
+            0
+          }
         />
       );
       break;
@@ -118,6 +192,11 @@ export default function ConfigScreen() {
           device_name={deviceName}
           notifySave={notifySave}
           setNotifySave={setNotifySave}
+          deviceConfig={deviceConfig}
+          deviceIntensity={
+            deviceStatus?.[`${deviceName}_status` as keyof Field]?.[0]?.value ??
+            0
+          }
         />
       );
   }
@@ -131,7 +210,7 @@ export default function ConfigScreen() {
       style={{
         ...styles.container,
         paddingTop: insets.top + 20,
-        paddingBottom: insets.bottom + 80,
+        paddingBottom: insets.bottom + 20,
       }}
     >
       <View style={styles.header}>
@@ -174,7 +253,7 @@ export default function ConfigScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ecffe1",
+    backgroundColor: "#f1f7f1",
     padding: 20,
     gap: 16,
   },
@@ -225,5 +304,15 @@ const styles = StyleSheet.create({
   radioButtonSection: {
     paddingHorizontal: 20,
     gap: 8,
+  },
+  shadow: {
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 10,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.5,
+    elevation: 5,
   },
 });

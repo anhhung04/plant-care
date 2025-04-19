@@ -11,7 +11,7 @@ import { colors } from "@/assets/fonts/colors";
 import styles from "@/src/styles/AuthStyle";
 import { useNavigation } from "@react-navigation/native";
 import { Feather } from "@expo/vector-icons";
-import { router } from 'expo-router';
+import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/src/context/AuthContext";
 
@@ -27,31 +27,29 @@ const SignupScreen = () => {
 
   const handleSignup = () => {
     if (onSignup) {
-      const res = onSignup('email', 'password');
-      router.replace('/auth/waiting'); 
+      const res = onSignup("email", "password");
+      router.replace("/auth/waiting");
     } else {
       console.error("onSignup function error");
     }
-    router.replace('/auth/waiting'); 
+    router.replace("/auth/waiting");
   };
 
   const handleLogin = () => {
     //navigation.navigate("(auth)/login");
-    router.replace('/auth/signin');
+    router.replace("/auth/signin");
   };
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{
-      ...styles.container,
-      paddingTop: insets.top,
-      }}>
+    <View
+      style={{
+        ...styles.container,
+        paddingTop: insets.top,
+      }}
+    >
       <TouchableOpacity style={styles.backButtonWrapper} onPress={handleGoBack}>
-        <Feather
-          name={"arrow-left"}
-          color={colors.primary}
-          size={25}
-        />
+        <Feather name={"arrow-left"} color={colors.primary} size={25} />
       </TouchableOpacity>
       <View style={styles.textContainer}>
         <Text style={styles.headingText}>Đăng ký</Text>
@@ -84,7 +82,7 @@ const SignupScreen = () => {
             <Feather name={"eye"} size={20} color={colors.secondary} />
           </TouchableOpacity>
         </View>
-        
+
         <View style={styles.inputContainer}>
           <Feather name={"lock"} size={30} color={colors.secondary} />
           <TextInput
@@ -102,11 +100,7 @@ const SignupScreen = () => {
           </TouchableOpacity>
         </View>
         <View style={styles.inputContainer}>
-          <Feather
-            name={"phone"}
-            size={30}
-            color={colors.secondary}
-          />
+          <Feather name={"phone"} size={30} color={colors.secondary} />
           <TextInput
             style={styles.textInput}
             placeholder="Số điện thoại"
@@ -115,10 +109,13 @@ const SignupScreen = () => {
           />
         </View>
 
-        <TouchableOpacity style={styles.loginButtonWrapper} onPress={handleSignup}>
+        <TouchableOpacity
+          style={styles.loginButtonWrapper}
+          onPress={handleSignup}
+        >
           <Text style={styles.loginText}>Đăng ký</Text>
         </TouchableOpacity>
-        
+
         <View style={styles.footerContainer}>
           <Text style={styles.accountText}>Đã có tài khoản?</Text>
           <TouchableOpacity onPress={handleLogin}>
