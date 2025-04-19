@@ -1,11 +1,7 @@
 // Create a context for greenhouse and field state
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL, SOCKET_URL } from '@/config';
-import data from '../components/onboarding/data';
-import { Client } from '@stomp/stompjs';
-import { connectToSocket, disconnectFromSocket } from '../services/SocketService';
-
+import { API_BASE_URL } from '@/config';
 
 export type Greenhouse = {
     greenhouse_id: string;
@@ -53,6 +49,8 @@ type GardenContextType = {
   selectField: (field: Field, index: number) => void;
   updateSensorData: (data: any) => void;
   clearSelectedOptions: () => void;
+  startPolling: () => void;
+  stopPolling: () => void;
 };
 
 const GardenContext = createContext<GardenContextType | undefined>(undefined);
@@ -64,46 +62,7 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
   const [selectedFieldIndex, setSelectedFieldIndex] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-
-  useEffect(() => {
-    const loadSavedState = async () => {
-      try {
-        const savedGreenhouseId = await SecureStore.getItem('selectedGreenhouseId');
-        const savedFieldIndex = await SecureStore.getItem('selectedFieldIndex');
-        
-        if (savedGreenhouseId) {
-          await fetchGreenhouses();
-          
-          // Find and select the saved greenhouse
-          const greenhouse = greenhouses.find(g => g.greenhouse_id === savedGreenhouseId);
-          if (greenhouse) {
-            setSelectedGreenhouse(greenhouse);
-            
-            // Select saved field if it exists
-            if (savedFieldIndex !== null) {
-              const fieldIndex = parseInt(savedFieldIndex || '-1', 10);
-              if (fieldIndex >= 0 && fieldIndex < greenhouse.fields.length) {
-                setSelectedField(greenhouse.fields[fieldIndex]);
-                setSelectedFieldIndex(fieldIndex);
-              }
-            }
-          }
-        }
-      } catch (err) {
-        console.error('Failed to load saved state', err);
-      }
-    };
-    
-    loadSavedState();
-  }, []);
-
-  useEffect(() => {
-    if (selectedGreenhouse && selectedField && selectedFieldIndex !== null) {
-      // Connect to the socket with the selected greenhouse ID
-      connectToSocket(selectedGreenhouse.greenhouse_id);
-    }
-  }, [selectedGreenhouse, selectedField, selectedFieldIndex]);
+  const [pollingInterval, setPollingInterval] = useState<NodeJS.Timeout | null>(null);
 
   const fetchGreenhouses = async () => {
     setIsLoading(true);
@@ -120,7 +79,6 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
       if (response.ok) {
         const data = await response.json();
         setGreenhouses(data.data);
-        
       }else {
         console.error('Failed request:', response);
       }
@@ -132,13 +90,94 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const startPolling = () => {
+    if (pollingInterval) {
+      stopPolling(); // Clear any existing interval first
+    }
+    
+    if (selectedGreenhouse?.greenhouse_id) {
+      const interval = setInterval(() => {
+        fetchGreenhouseById(selectedGreenhouse.greenhouse_id);
+      }, 5000); // Poll every 5 seconds
+      
+      setPollingInterval(interval);
+    }
+  };
+
+  // Stop polling function
+  const stopPolling = () => {
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      setPollingInterval(null);
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      if (pollingInterval) {
+        clearInterval(pollingInterval);
+      }
+    };
+  }, [pollingInterval]);
+
+  const fetchGreenhouseById = async (greenhouseId: string) => {
+    if (!greenhouseId) return;
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/greenhouses/ds-get/${greenhouseId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        const responseData = await response.json();
+        if (responseData.success && responseData.data) {
+          // Update the specific greenhouse in the greenhouses array
+          setGreenhouses(currentGreenhouses => {
+            return currentGreenhouses.map(gh => {
+              if (gh.greenhouse_id === greenhouseId) {
+                return responseData.data;
+              }
+              return gh;
+            });
+          });
+          
+          // If this is the currently selected greenhouse, update it and the selected field
+          if (selectedGreenhouse?.greenhouse_id === greenhouseId) {
+            setSelectedGreenhouse(responseData.data);
+            
+            if (selectedFieldIndex !== null && responseData.data.fields[selectedFieldIndex]) {
+              setSelectedField(responseData.data.fields[selectedFieldIndex]);
+            }
+          }
+        }
+      } else {
+        console.error('Failed to fetch greenhouse data:', response);
+      }
+    } catch (err) {
+      console.error('Error fetching greenhouse:', err);
+    }
+  };
+
   const selectGreenhouse = async (greenhouse: Greenhouse | null) => {
-    if (!greenhouse) {setSelectedGreenhouse(null); return}
+    if (!greenhouse) {
+      setSelectedGreenhouse(null);
+      stopPolling();
+      return;
+    }
     setSelectedGreenhouse(greenhouse);
     setSelectedField(null);
     setSelectedFieldIndex(null);
     await SecureStore.setItem('selectedGreenhouseId', greenhouse.greenhouse_id);
     await SecureStore.deleteItemAsync('selectedFieldIndex');
+    
+    // Start polling when a greenhouse is selected
+    if (greenhouse.greenhouse_id) {
+      stopPolling(); // Stop any existing polling
+      setTimeout(() => startPolling(), 0); // Start new polling in the next tick
+    }
   };
   
   const selectField = async (field: Field, index: number) => {
@@ -146,37 +185,10 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
     setSelectedField(field);
     setSelectedFieldIndex(index);
     await SecureStore.setItemAsync('selectedFieldIndex', index.toString());
-  };
+  };  
 
-  const updateFieldsData = (fields: Field[]) => {
-    if (!selectedGreenhouse) return;
-    
-    // Create a deep copy of the current greenhouse
-    const updatedGreenhouse = {
-      ...selectedGreenhouse,
-      fields: fields
-    };
-    
-    // Update the selected field if we have a selected field index
-    if (selectedFieldIndex !== null && fields[selectedFieldIndex]) {
-      setSelectedField(fields[selectedFieldIndex]);
-    }
-    
-    // Update the greenhouses array
-    setGreenhouses(currentGreenhouses => {
-      return currentGreenhouses.map(gh => {
-        if (gh.greenhouse_id === selectedGreenhouse.greenhouse_id) {
-          return updatedGreenhouse;
-        }
-        return gh;
-      });
-    });
-    
-    // Update the selected greenhouse
-    setSelectedGreenhouse(updatedGreenhouse);
-  };
-  
   const clearSelectedOptions = async () => {
+    stopPolling();
     setSelectedGreenhouse(null);
     setSelectedField(null);
     setSelectedFieldIndex(null);
@@ -225,7 +237,41 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  useEffect(() => {
+    const loadSavedSelections = async () => {
+      try {
+        const savedGreenhouseId = await SecureStore.getItemAsync('selectedGreenhouseId');
+        const savedFieldIndexStr = await SecureStore.getItemAsync('selectedFieldIndex');
+        
+        if (savedGreenhouseId && greenhouses.length > 0) {
+          const greenhouse = greenhouses.find(gh => gh.greenhouse_id === savedGreenhouseId);
+          if (greenhouse) {
+            setSelectedGreenhouse(greenhouse);
+            
+            if (savedFieldIndexStr) {
+              const fieldIndex = parseInt(savedFieldIndexStr, 10);
+              if (!isNaN(fieldIndex) && greenhouse.fields[fieldIndex]) {
+                setSelectedField(greenhouse.fields[fieldIndex]);
+                setSelectedFieldIndex(fieldIndex);
+                
+                // Start polling for the saved greenhouse
+                setTimeout(() => startPolling(), 0);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error loading saved selections:', err);
+      }
+    };
+    
+    if (greenhouses.length > 0) {
+      loadSavedSelections();
+    }
+  }, [greenhouses]);
+
   return (
+
     <GardenContext.Provider
       value={{
         greenhouses,
@@ -239,6 +285,8 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
         selectField,
         updateSensorData,
         clearSelectedOptions,
+        startPolling,
+        stopPolling,
       }}
     >
       {children}

@@ -22,7 +22,6 @@ import { ChangeAreaModal } from '@/src/components/ChangeAreaModal';
 import { useAuth } from '@/src/context/AuthContext';
 import { Field, Greenhouse, useGarden } from '@/src/context/GreenHouse';
 import GardenSetting from './gsetting';
-import { G } from 'react-native-svg';
 
 export default function Profile() {
   const [form, setForm] = useState({
@@ -95,11 +94,11 @@ export default function Profile() {
     hideTabBar();
   }
 
-  const handleChangeArea = (area ?: Field) => {
+  const handleChangeArea = (area ?: number) => {
     setChangeAreaVisible(false);
     showTabBar();
     if (area) {
-      selectField(area, selectedFieldIndex || 0);
+      selectField(selectedGreenhouse.fields[area], selectedFieldIndex || 0);
     } else {
       // Handle the case when no field is selected (null)
       console.log("No Field selected");
@@ -117,6 +116,7 @@ export default function Profile() {
   }, [form]);
 
   return (
+    <>
     <SafeAreaView style={{flex:1, backgroundColor: colors.bg}}>
       { isChangeGreenhouseVisible && <GardenSetting/> }
       {!isChangeGreenhouseVisible && (
@@ -309,12 +309,13 @@ export default function Profile() {
       />
       <ChangeAreaModal
         visible={isChangeAreaVisible}
-        onClose={(area?: Field) => { handleChangeArea(area); }}
-        current={selectedField}
+        onClose={(area?: number) => { handleChangeArea(area); }}
+        current={selectedFieldIndex ?? 0}
         areas={selectedGreenhouse.fields}
       />
       
     </SafeAreaView>
+    </>
   );
 }
 

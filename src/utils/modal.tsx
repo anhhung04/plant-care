@@ -9,9 +9,9 @@ export interface BottomSheetModalProps {
 
   export interface ChangeAreaModalProps {
     visible: boolean;
-    onClose: (area?: Field) => void;
+    onClose: (area?: number) => void;
     areas: Field[];
-    current: Field;
+    current: number;
   }
 
   export interface ChangeGreenhouseModalProps {
