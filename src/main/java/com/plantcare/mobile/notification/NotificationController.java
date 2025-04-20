@@ -24,7 +24,7 @@ public class NotificationController {
     private final ExpoPushService expoPushService;
     private final FcmTokenRepository repo;
     @PostMapping
-    public ApiResponse<NotificationResponse> sendNotification(@RequestBody NotificationCreationRequest request) {
+    public ApiResponse<NotificationResponse> sendNotification(@RequestBody NotificationCreationRequest request) throws Exception {
         log.info("Received notification request: {}", request);
 
         // Gọi service gửi notification
@@ -48,8 +48,9 @@ public class NotificationController {
 
     @PostMapping("/register-token")
     public ApiResponse<String> registerToken(@RequestBody FCMregister req) {
-        // upsert token
         log.info("Received token registration request: {}", req);
+
+        // Check if the token already exists
         FCMToken existingToken = repo.findByToken(req.getToken());
         if (existingToken != null) {
             log.warn("Token already exists: {}", req.getToken());
@@ -60,6 +61,12 @@ public class NotificationController {
                     .build();
         }
 
+        // Save the new token
+        FCMToken newToken = FCMToken.builder()
+                .token(req.getToken())
+                .userId(req.getUserId())
+                .build();
+        repo.save(newToken);
 
         return ApiResponse.<String>builder()
                 .status(HttpStatusCode.valueOf(200))

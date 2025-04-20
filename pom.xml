@@ -129,6 +129,11 @@
 			<artifactId>jakarta.servlet.jsp.jstl</artifactId>
 		</dependency>
 		<dependency>
+			<groupId>dev.expo</groupId>
+			<artifactId>expo-server-sdk</artifactId>
+			<version>4.0.0</version> <!-- kiểm tra phiên bản mới nhất -->
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-openfeign</artifactId>
 		</dependency>

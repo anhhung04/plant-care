@@ -2,10 +2,7 @@ package com.plantcare.mobile.notification.entity;
 
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import org.checkerframework.checker.units.qual.C;
 
 @Entity
@@ -13,6 +10,7 @@ import org.checkerframework.checker.units.qual.C;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class FCMToken{
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
