@@ -200,23 +200,6 @@ export default function Profile() {
                   size={28} />
               </TouchableOpacity>
   
-              <View style={styles.row}>
-                <View style={[styles.rowIcon, { backgroundColor: '#3bbedb' }]}>
-                  <FeatherIcon color="#fff" name="at-sign" size={24} />
-                </View>
-  
-                <Text style={styles.rowLabel}>Thông báo Email</Text>
-  
-                <View style={styles.rowSpacer} />
-  
-                <Switch
-                  onValueChange={emailNotifications =>
-                    setForm({ ...form, emailNotifications })
-                  }
-                  trackColor={{ false: '#f4f4f4', true: '#b4e0e9' }}
-                  thumbColor={form.emailNotifications ? '#3bbedb' : '#fff'}
-                  value={form.emailNotifications} />
-              </View>
   
               <View style={styles.row}>
                 <View style={[styles.rowIcon, { backgroundColor: '#38C959' }]}>

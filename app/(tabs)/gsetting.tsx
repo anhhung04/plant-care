@@ -35,6 +35,7 @@ export default function GardenSetting() {
       )}
       {!isLoading && !error && (
         <>
+          <Text style={styles.title}>Chọn Greenhouse</Text>
           <View style={styles.cardContainer}>
             {greenhouses.map((item, index) => {
               const isCurrent = selectedGreenhouse?.greenhouse_id === item.greenhouse_id;
@@ -144,7 +145,6 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   card: {
-    flex: 1,
     marginBottom: 10,
     borderRadius: 20,
   },

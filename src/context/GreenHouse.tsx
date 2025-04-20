@@ -120,43 +120,45 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
   }, [pollingInterval]);
 
   const fetchGreenhouseById = async (greenhouseId: string) => {
-    if (!greenhouseId) return;
-    
+    if (!greenhouseId) {
+      console.error('No greenhouse ID provided.');
+      return;
+    }
+  
     try {
-      const response = await fetch("http://104.214.177.9:8080//greenhouses/ds-get/${greenhouseId}", {
+      const response = await fetch(`http://104.214.177.9:8080/mobileBE/greenhouses/ds-get/${greenhouseId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
-      if (response.ok) {
-        const responseData = await response.json();
-        if (responseData.success && responseData.data) {
-          // Update the specific greenhouse in the greenhouses array
-          setGreenhouses(currentGreenhouses => {
-            return currentGreenhouses.map(gh => {
-              if (gh.greenhouse_id === greenhouseId) {
-                return responseData.data;
-              }
-              return gh;
-            });
-          });
-          
-          // If this is the currently selected greenhouse, update it and the selected field
-          if (selectedGreenhouse?.greenhouse_id === greenhouseId) {
-            setSelectedGreenhouse(responseData.data);
-            
-            if (selectedFieldIndex !== null && responseData.data.fields[selectedFieldIndex]) {
-              setSelectedField(responseData.data.fields[selectedFieldIndex]);
-            }
+  
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed to fetch greenhouse data:', response.status, errorText);
+        return;
+      }
+  
+      const responseData = await response.json();
+      if (responseData.success && responseData.data) {
+        setGreenhouses(currentGreenhouses =>
+          currentGreenhouses.map(gh =>
+            gh.greenhouse_id === greenhouseId ? responseData.data : gh
+          )
+        );
+  
+        if (selectedGreenhouse?.greenhouse_id === greenhouseId) {
+          setSelectedGreenhouse(responseData.data);
+  
+          if (selectedFieldIndex !== null && responseData.data.fields[selectedFieldIndex]) {
+            setSelectedField(responseData.data.fields[selectedFieldIndex]);
           }
         }
       } else {
-        console.error('Failed to fetch greenhouse data:', response);
+        console.error('Unexpected response structure:', responseData);
       }
     } catch (err) {
-      console.error('Error fetching greenhouse:', err);
+      console.error('Error fetching greenhouse:');
     }
   };
 

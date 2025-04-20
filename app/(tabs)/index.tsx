@@ -20,6 +20,7 @@ import { TabBarContext } from "./_layout";
 import { getRandomImage, URL } from "@/src/utils/farmpic";
 import { useGarden } from "@/src/context/GreenHouse";
 import GardenSetting from "./gsetting";
+import { stat } from "fs";
 
 
 
@@ -119,10 +120,6 @@ const HomeScreen: React.FC = () => {
   const [deviceStates, setDeviceStates] = useState(devices);
   const [equipmentStates, setEquipmentStates] = useState(equipments);
   const [modalVisible, setModalVisible] = useState(false);
-  const [dataAgeState, setDataAgeState] = useState<"fresh" | "stale">("fresh");
-  const [previousSensorTimestamps, setPreviousSensorTimestamps] = useState<
-    Record<string, number>
-  >({});
 
   const { hideTabBar, showTabBar } = useContext(TabBarContext);
   const [imageState, setImageState] = useState(URL[0]);
@@ -140,7 +137,6 @@ const HomeScreen: React.FC = () => {
 
   // Start the blinking animation for active indicators
   useEffect(() => {
-    if (dataAgeState === "fresh") {
       const blinkAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(opacityAnim, {
@@ -160,15 +156,8 @@ const HomeScreen: React.FC = () => {
 
       // Cleanup on unmount
       return () => blinkAnimation.stop();
-    } else {
-      // If data is stale, stop animation and set to solid opacity
-      Animated.timing(opacityAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [dataAgeState]);
+ 
+  }, []);
 
   // Check if selected field's sensor data has been updated
   useEffect(() => {
@@ -187,39 +176,6 @@ const HomeScreen: React.FC = () => {
         { key: "light", data: selectedField.light_sensor },
       ];
 
-      // Check if any sensor group has new timestamps
-      for (const group of sensorGroups) {
-        if (group.data && group.data.length > 0) {
-          for (let i = 0; i < group.data.length; i++) {
-            const sensor = group.data[i];
-            const sensorKey = `${group.key}_${i}`;
-            const sensorTime = new Date(sensor.timestamp).getTime();
-            const prevTime = previousSensorTimestamps[sensorKey] || 0;
-
-            // If timestamp has changed, data is being updated
-            if (sensorTime > prevTime) {
-              isUpdated = true;
-
-              // Update the previous timestamp record
-              setPreviousSensorTimestamps((prev) => ({
-                ...prev,
-                [sensorKey]: sensorTime,
-              }));
-            }
-
-            // If data is too old, mark as stale
-            if (now - sensorTime > MAX_DATA_AGE) {
-              setDataAgeState("stale");
-              return;
-            }
-          }
-        }
-      }
-
-      // If we found updated data, mark as fresh
-      if (isUpdated) {
-        setDataAgeState("fresh");
-      }
     };
 
     // Check once immediately when selectedField changes
@@ -234,7 +190,6 @@ const HomeScreen: React.FC = () => {
   useEffect(() => {
     if (selectedGreenhouse) {
       startPolling();
-      setDataAgeState("fresh");
     }
 
     // Cleanup function to stop polling when component unmounts
@@ -319,7 +274,7 @@ const HomeScreen: React.FC = () => {
                     {
                       opacity: opacityAnim,
                       backgroundColor:
-                        dataAgeState === "fresh" ? "green" : "yellow",
+                        "green" 
                     },
                   ]}
                 />
@@ -340,7 +295,7 @@ const HomeScreen: React.FC = () => {
                     {
                       opacity: opacityAnim,
                       backgroundColor:
-                        dataAgeState === "fresh" ? "green" : "yellow",
+                        "green"
                     },
                   ]}
                 />
@@ -361,7 +316,7 @@ const HomeScreen: React.FC = () => {
                     {
                       opacity: opacityAnim,
                       backgroundColor:
-                        dataAgeState === "fresh" ? "green" : "yellow",
+                        "green" 
                     },
                   ]}
                 />
@@ -382,7 +337,7 @@ const HomeScreen: React.FC = () => {
                     {
                       opacity: opacityAnim,
                       backgroundColor:
-                        dataAgeState === "fresh" ? "green" : "yellow",
+                       "green"
                     },
                   ]}
                 />
@@ -421,12 +376,7 @@ const HomeScreen: React.FC = () => {
                     styles.statusDot,
                     {
                       opacity: opacityAnim,
-                      backgroundColor:
-                        dataAgeState === "fresh"
-                          ? status.value
-                            ? "green"
-                            : "red"
-                          : "yellow",
+                      backgroundColor:status.value ? "green" : "red",
                     },
                   ]}
                 />
@@ -446,13 +396,8 @@ const HomeScreen: React.FC = () => {
                     styles.statusDot,
                     {
                       opacity: opacityAnim,
-                      backgroundColor:
-                        dataAgeState === "fresh"
-                          ? status.value
-                            ? "green"
-                            : "red"
-                          : "yellow",
-                    },
+                      backgroundColor:status.value ? "green" : "red",
+                    }
                   ]}
                 />
               </View>
@@ -471,12 +416,7 @@ const HomeScreen: React.FC = () => {
                     styles.statusDot,
                     {
                       opacity: opacityAnim,
-                      backgroundColor:
-                        dataAgeState === "fresh"
-                          ? status.value
-                            ? "green"
-                            : "red"
-                          : "yellow",
+                      backgroundColor: status.value ? "green" : "red"
                     },
                   ]}
                 />
