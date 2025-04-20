@@ -1,4 +1,3 @@
-import withCleartextTraffic from './withCleartextTraffic';
 export default {
     name: "greenhouse", // Tên ứng dụng
     version: "1.0.0", // Phiên bản ứng dụng
@@ -17,5 +16,4 @@ export default {
         SOCKET_URL: process.env.SOCKET_URL
       }
     },
-    plugins: [withCleartextTraffic]
   };

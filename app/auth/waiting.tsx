@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import LottieView from 'lottie-react-native';
 import {router} from 'expo-router';
 
-export const LoadingScreen = () => {
+export const LoadingScreen = ({ message }: { message: string }) => {
   const insets = useSafeAreaInsets();
 
   return (
@@ -32,6 +32,7 @@ export const LoadingScreen = () => {
 
       <View style={styles.formContainer}>
         <Text style={styles.cautionText}>Vui lòng đợi trong giây lát!</Text>
+        <Text style={styles.cautionText}>{message}</Text>
       </View>
     </View>
   );

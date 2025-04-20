@@ -1,6 +1,6 @@
   import { Redirect, Slot, Stack, useRouter } from 'expo-router';
   import {AuthProvider, useAuth } from '../src/context/AuthContext';
-  import { useContext, useEffect, useState } from 'react';
+  import { useContext, useEffect, useRef, useState } from 'react';
   import { StatusBar,Text } from 'react-native';
   import { LoadingScreen } from './auth/waiting';
   import { GardenProvider } from '@/src/context/GreenHouse';
@@ -12,11 +12,8 @@ const queryClient = new QueryClient();
 
 const RootLayoutNav = () => {
   const authContext = useAuth();
-  const authState = authContext?.authState;
-  const isFirstTimeUser = authContext?.isFirstTimeUser;
   const loading = authContext?.loading;
   const [isDelayedLoading, setIsDelayedLoading] = useState(true); // Tracks delay
-
   // Handle the 2-second delay
   useEffect(() => {
     if (!loading) {
@@ -32,7 +29,7 @@ const RootLayoutNav = () => {
 
   // Show loading screen if either auth is loading or delay hasn't completed
   if (loading || isDelayedLoading) {
-    return <LoadingScreen />; // Your loading component
+    return <LoadingScreen message='Đang tải ứng dụng'/>; // Your loading component
   }
   return (
     <React.Fragment>

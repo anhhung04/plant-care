@@ -9,7 +9,6 @@ import {DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import { LineChart, yAxisSides } from "react-native-gifted-charts";
 import { fonts } from "@/assets/fonts/font";
 import { useGarden } from '@/src/context/GreenHouse';
-import { API_BASE_URL } from '@/config';
 
 
 interface Data {
@@ -104,7 +103,7 @@ const Dashboard: React.FC = () => {
 
   const fetchData = async (selectedDate: Date) => {
     try {
-      const response = await fetch(API_BASE_URL+'/greenhouses/ds-get-analyze/'+ selectedGreenhouse?.greenhouse_id,
+      const response = await fetch('http://104.214.177.9:8080/mobileBE/greenhouses/ds-get-analyze/'+ selectedGreenhouse?.greenhouse_id,
         { method: 'GET',
           headers: {
           'Content-Type': 'application/json',

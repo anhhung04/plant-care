@@ -28,71 +28,33 @@ export default function GardenSetting() {
   
   const insets = useSafeAreaInsets();
   return (
-    <ScrollView contentContainerStyle={[styles.container, { paddingTop: insets.top + 30 }]}>
-      <Text style={styles.title}>Chọn Greenhouse</Text>
-
-      {isLoading && <LoadingScreen/>}
-      {error && <Text style={styles.error}>{error}</Text>}
-
-      <View style={styles.cardContainer}>
-        {greenhouses.map((item, index) => {
-          const isCurrent = selectedGreenhouse?.greenhouse_id === item.greenhouse_id;
-
-          const GreenhouseName = `Greenhouse ${index + 1}`; // Fallback name if not provided
-          return (
-            <TouchableOpacity
-              key={item.greenhouse_id}
-              style={[styles.card, isCurrent && styles.currentAreaCard]}
-              onPress={() => {
-                if (!isCurrent) {
-                  selectGreenhouse(item);
-                }
-              }}
-              disabled={isCurrent}
-            >
-              <Card style={{ borderRadius: 20 }}>
-                <Card.Cover style={styles.cardImage} source={{ uri: URL_G[index] }} />
-                <View style={styles.textOverlay}>
-                  <Text style={[styles.titleText, isCurrent && styles.currentAreaName]}>
-                    {GreenhouseName}
-                  </Text>
-                  {isCurrent && <Text style={styles.subtitle}>(Currently selected)</Text>}
-                </View>
-              </Card>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-
-      {selectedGreenhouse && (
+    <View style={[styles.container, { paddingTop: insets.top + 30 }]}>
+      {isLoading && <LoadingScreen message={"Đang lấy thông tin về Greenhouse ..."}/>}
+      {!isLoading && error && (
+        <Text style={styles.error}>Không thể lấy được thông tin Greenhouse</Text>
+      )}
+      {!isLoading && !error && (
         <>
-          <Text style={styles.title}>Chọn Vườn</Text>
           <View style={styles.cardContainer}>
-            {selectedGreenhouse.fields.map((field, index) => {
-              const isCurrent = selectedFieldIndex === index;
-              // Since your Field type doesn't have a name, we'll use the index
-              const fieldName = `Field ${index}`;
-              
+            {greenhouses.map((item, index) => {
+              const isCurrent = selectedGreenhouse?.greenhouse_id === item.greenhouse_id;
+              const GreenhouseName = `Greenhouse ${index + 1}`;
               return (
                 <TouchableOpacity
-                  key={`field-${index}`}
+                  key={item.greenhouse_id}
                   style={[styles.card, isCurrent && styles.currentAreaCard]}
                   onPress={() => {
                     if (!isCurrent) {
-                      selectField(field, index);
+                      selectGreenhouse(item);
                     }
                   }}
                   disabled={isCurrent}
                 >
                   <Card style={{ borderRadius: 20 }}>
-                    {/* Use a default image or create images array based on field index */}
-                    <Card.Cover 
-                      style={styles.cardImage} 
-                      source={{ uri: URL[index % URL.length] }} 
-                    />
+                    <Card.Cover style={styles.cardImage} source={{ uri: URL_G[index] }} />
                     <View style={styles.textOverlay}>
                       <Text style={[styles.titleText, isCurrent && styles.currentAreaName]}>
-                        {fieldName}
+                        {GreenhouseName}
                       </Text>
                       {isCurrent && <Text style={styles.subtitle}>(Currently selected)</Text>}
                     </View>
@@ -101,16 +63,54 @@ export default function GardenSetting() {
               );
             })}
           </View>
+          {selectedGreenhouse && (
+            <>
+              <Text style={styles.title}>Chọn Vườn</Text>
+              <View style={styles.cardContainer}>
+                {selectedGreenhouse.fields.map((field, index) => {
+                  const isCurrent = selectedFieldIndex === index;
+                  const fieldName = `Field ${index}`;
+                  return (
+                    <TouchableOpacity
+                      key={`field-${index}`}
+                      style={[styles.card, isCurrent && styles.currentAreaCard]}
+                      onPress={() => {
+                        if (!isCurrent) {
+                          selectField(field, index);
+                        }
+                      }}
+                      disabled={isCurrent}
+                    >
+                      <Card style={{ borderRadius: 20 }}>
+                        <Card.Cover
+                          style={styles.cardImage}
+                          source={{ uri: URL[index % URL.length] }}
+                        />
+                        <View style={styles.textOverlay}>
+                          <Text style={[styles.titleText, isCurrent && styles.currentAreaName]}>
+                            {fieldName}
+                          </Text>
+                          {isCurrent && <Text style={styles.subtitle}>(Currently selected)</Text>}
+                        </View>
+                      </Card>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
         </>
       )}
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     padding: 16,
-    backgroundColor: colors.bg,
+    backgroundColor: colors.white,
+
   },
   title: {
     fontSize: 26,
@@ -129,6 +129,9 @@ const styles = StyleSheet.create({
     color: 'red',
     marginBottom: 8,
     textAlign: 'center',
+    justifyContent: 'center',
+    alignItems: 'center',
+
   },
   sectionTitle: {
     fontSize: 20,

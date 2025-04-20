@@ -1,7 +1,6 @@
 // Create a context for greenhouse and field state
 import { createContext, useContext, ReactNode, useState, useEffect } from 'react';
 import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL } from '@/config';
 
 export type Greenhouse = {
     greenhouse_id: string;
@@ -69,7 +68,7 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
     setError(null);
     try { 
       // Replace with your actual API call
-      const response = await fetch(API_BASE_URL + '/greenhouses/ds-get?owner=&location=&offset=0&limit=10' ,{
+      const response = await fetch("http://104.214.177.9:8080/mobileBE/greenhouses/ds-get?owner=&location=&offset=0&limit=10" ,{
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -124,7 +123,7 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
     if (!greenhouseId) return;
     
     try {
-      const response = await fetch(`${API_BASE_URL}/greenhouses/ds-get/${greenhouseId}`, {
+      const response = await fetch("http://104.214.177.9:8080//greenhouses/ds-get/${greenhouseId}", {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

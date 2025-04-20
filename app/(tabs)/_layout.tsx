@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { Redirect, Slot, SplashScreen, Tabs } from "expo-router";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Feather } from "@expo/vector-icons";
@@ -12,13 +12,21 @@ import { CommonActions } from "@react-navigation/native";
 import Dashboard from "./dashboard";
 import Reminder from "./reminder";
 import HomeScreen from ".";
-import Setting from "./setting";
 import Profile from "./profile";
 import { useAuth } from "@/src/context/AuthContext";
 import SettingTab from "./setting";
 import ConfigScreen from "./setting/[device_name]";
 import { useGarden } from "@/src/context/GreenHouse";
 import GardenSetting from "./gsetting";
+import { LoadingScreen } from "../auth/waiting";
+
+import { LogBox } from 'react-native';
+import { 
+  initializeNotifications, 
+  registerForPushNotificationsAsync,
+  processFCMNotification
+} from '@/src/services/Firebase';
+import * as Notifications from 'expo-notifications';
 
 export const TabBarContext = createContext({
   showTabBar: () => {},
@@ -43,8 +51,52 @@ export default function TabLayout() {
 
   const { selectedGreenhouse, selectedField } = useGarden();
 
+  const responseListener = useRef<any>();
+  const notificationListener = useRef<any>();
+  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Initialize notifications
+    initializeNotifications();
+
+    // Register for push notifications
+    registerForPushNotificationsAsync().then(token => {
+      if (token) {
+        setExpoPushToken(token);
+        // You should send this token to your backend
+        // sendTokenToBackend(token);
+      }
+    });
+
+    // This listener is fired whenever a notification is received while the app is foregrounded
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      // Process the notification
+      const { title, body } = notification.request.content;
+      const notificationId = notification.request.identifier;
+      
+      processFCMNotification({
+        notification: { title, body },
+        messageId: notificationId
+      });
+    });
+
+    // This listener is fired whenever a user taps on or interacts with a notification
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      // Navigate to notifications screen or handle the notification interaction
+      // You'll need to access your navigation object here
+      // navigation.navigate('Notifications');
+    });
+
+    // Clean up the listeners on unmount
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, []);
+
+
     if (loading){
-      return <Text style={{fontSize: 100}}>Loading...</Text>;
+      return <LoadingScreen message=""/>; // Your loading component
     }
 
     if (!authState?.authenticated) {
@@ -60,7 +112,6 @@ export default function TabLayout() {
           <GardenSetting/>
         );
     }
-    
 
   return (
     <TabBarContext.Provider value={{ showTabBar: () => setTabBarVisible(true), hideTabBar: () => setTabBarVisible(false) }}>  
@@ -145,7 +196,7 @@ export default function TabLayout() {
           name="reminder" 
           component={Reminder}
           options={{ 
-            title: 'Nhắc nhở',
+            title: 'Thông báo',
             tabBarIcon: ({ color, size }) => (
               <View style={styles.reminderIconContainer}>
                 <Feather name="bell" size={size} color={color} />
@@ -183,6 +234,16 @@ export default function TabLayout() {
             ),
           }}
         />
+        {/* <Tab.Screen
+          name="test"
+          component={Test}
+          options={{
+            title: "Test",
+            tabBarIcon: ({ color, size }) => (
+              <Feather name="cloud" size={size} color={color} />
+            ),
+          }}
+        /> */}
       </Tab.Navigator>
     </TabBarContext.Provider>
   );

@@ -1,37 +1,47 @@
-import React, { useState, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef, useContext } from 'react';
 import { 
   StyleSheet, 
   Text, 
   View, 
   SafeAreaView, 
   TouchableOpacity, 
-  Dimensions, 
   Switch, 
   StatusBar,
-  Alert
+  Alert,
+  Platform
 } from 'react-native';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, ScrollView } from 'react-native-gesture-handler';
 import Animated, { 
   useAnimatedStyle, 
   useSharedValue,
   withTiming,
-  useAnimatedGestureHandler,
-  runOnJS
+  useAnimatedGestureHandler
 } from 'react-native-reanimated';
 import { PanGestureHandler } from 'react-native-gesture-handler';
 import { AntDesign, Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors } from '@/assets/fonts/colors';
-import {CreateReminder} from '@/src/components/CreateReminderModal';
 import { TabBarContext } from './_layout';
+import * as Notifications from 'expo-notifications';
+import * as SecureStore from 'expo-secure-store';
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
 
-export interface ReminderType {
+// Configure how notifications are handled when the app is in the foreground
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+export interface NotificationItem {
   id: string;
   title: string;
-  higherThan: number;
-  lowerThan: number;
-  repeatAfter: number;
-  active?: boolean;
+  body: string;
+  date: string;
+  read: boolean;
 }
 
 const SWIPE_THRESHOLD = -100;
@@ -42,7 +52,7 @@ const SwipeableItem = ({
   onDelete, 
   onToggle 
 }: { 
-  item: ReminderType; 
+  item: NotificationItem; 
   onDelete: (id: string) => void;
   onToggle: (id: string) => void;
 }) => {
@@ -86,15 +96,14 @@ const SwipeableItem = ({
   });
 
   return (
-    <>
     <View style={styles.itemContainer}>
       <Animated.View style={[styles.deleteButtonContainer, deleteButtonStyle]}>
         <TouchableOpacity 
           style={styles.deleteButton}
           onPress={() => {
             Alert.alert(
-              "Nhắc nhở",
-              "Bạn có chắc chắn muốn xóa lời nhắc này?",
+              "Thông báo",
+              "Bạn có chắc chắn muốn xóa thông báo này?",
               [
                 {
                   text: "Cancel",
@@ -117,117 +126,232 @@ const SwipeableItem = ({
       </Animated.View>
       
       <PanGestureHandler onGestureEvent={panGesture}>
-        <Animated.View style={[styles.reminderItem, animatedStyle]}>
-          <View style={styles.reminderInfo}>
-            <Text style={styles.reminderTitle}>{item.title}</Text>
-            <Text style={styles.reminderDetail}>
-              Cao hơn: {item.higherThan}
-            </Text>
-            <Text style={styles.reminderDetail}>
-              Thấp hơn: {item.lowerThan}
-            </Text>
+        <Animated.View style={[styles.notificationItem, animatedStyle, 
+          !item.read ? styles.unreadNotification : {}]}>
+          <View style={styles.notificationInfo}>
+            <Text style={styles.notificationTitle}>{item.title}</Text>
+            <Text style={styles.notificationBody}>{item.body}</Text>
+            <Text style={styles.notificationDate}>{item.date}</Text>
           </View>
-          <Switch
-            style={{ transform: [{ scaleX: 1.5 }, { scaleY: 1.5}] }}
-            value={item.active}
-            onValueChange={() => onToggle(item.id)}
-            trackColor={{ false: '#d3d3d3', true: '#fce5cd' }}
-            thumbColor={item.active ? colors.orange100 : '#f4f3f4'}
-          />
         </Animated.View>
       </PanGestureHandler>
     </View>
-    
-    </>
   );
 };
 
-const ReminderListScreen: React.FC = () => {
-
+const NotificationScreen: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
-  // Sample data - in a real app, this would come from a store/context
   const { hideTabBar, showTabBar } = useContext(TabBarContext);
-  const [reminders, setReminders] = useState<ReminderType[]>([
-    {
-      id: '1',
-      title: 'Nhiệt độ',
-      higherThan: 40,
-      lowerThan: 19,
-      repeatAfter: 24,
-      active: true
-    },
-    {
-      id: '2',
-      title: 'Độ ẩm không khí',
-      higherThan: 80,
-      lowerThan: 70,
-      repeatAfter: 12,
-      active: false
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  
+  const notificationListener = useRef<any>();
+  const responseListener = useRef<any>();
+  
+  useEffect(() => {
+    // Load stored notifications when component mounts
+    loadStoredNotifications();
+    
+    // Request permission for notifications
+    registerForPushNotifications();
+    
+    // Set up notification listeners
+    notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+      const newNotification: NotificationItem = {
+        id: Date.now().toString(),
+        title: notification.request.content.title || 'Notification',
+        body: notification.request.content.body || 'You have a new notification',
+        date: new Date().toLocaleString(),
+        read: false
+      };
+      
+      // Add the new notification to state and storage
+      addNotification(newNotification);
+    });
+    
+    responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+      // Handle notification response (user tapped notification)
+      const notificationId = response.notification.request.identifier;
+      markAsRead(notificationId);
+    });
+    
+    // Clean up listeners on unmount
+    return () => {
+      Notifications.removeNotificationSubscription(notificationListener.current);
+      Notifications.removeNotificationSubscription(responseListener.current);
+    };
+  }, []);
+  
+  const registerForPushNotifications = async () => {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+        vibrationPattern: [0, 250, 250, 250],
+        lightColor: '#FF231F7C',
+      });
     }
-  ]);
 
-  const toggleReminder = (id: string) => {
-    setReminders(reminders.map(reminder => 
-      reminder.id === id 
-        ? { ...reminder, active: !reminder.active } 
-        : reminder
-    ));
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    
+    // Only ask if permissions have not already been determined
+    if (existingStatus !== 'granted') {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    
+    // Stop here if no permissions granted
+    if (finalStatus !== 'granted') {
+      Alert.alert('Notification permission denied', 'Please enable notifications in your device settings to receive updates.');
+      return;
+    }
+    
+    if (!Device.isDevice) {
+      Alert.alert('Physical device required', 'Push notifications require a physical device to function properly.');
+      return;
+    }
+    
+    // Get push token
+    try {
+      const token = (await Notifications.getDevicePushTokenAsync()).data;
+      
+      // Store the token in SecureStore
+      await SecureStore.setItemAsync('pushToken', token);
+      
+      // You would normally send this token to your server
+      // sendTokenToServer(token);
+    } catch (error) {
+      console.error('Error getting push token:', error);
+    }
   };
-
-  const deleteReminder = (id: string) => {
-    setReminders(reminders.filter(reminder => reminder.id !== id));
+  
+  const loadStoredNotifications = async () => {
+    try {
+      const storedNotifications = await SecureStore.getItemAsync('notifications');
+      if (storedNotifications) {
+        setNotifications(JSON.parse(storedNotifications));
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error);
+    }
   };
-
-  const navigateToCreateReminder = () => {
-    // Navigation logic here
-    hideTabBar();
-    setIsVisible(true);
+  
+  const saveNotifications = async (notificationsToSave: NotificationItem[]) => {
+    try {
+      await SecureStore.setItemAsync('notifications', JSON.stringify(notificationsToSave));
+    } catch (error) {
+      console.error('Failed to save notifications:', error);
+    }
   };
-
-  const handleCreate = () => {
-    setIsVisible(false);
-    showTabBar();
-
-  }
+  
+  const addNotification = (notification: NotificationItem) => {
+    setNotifications((prevNotifications) => {
+      const updatedNotifications = [notification, ...prevNotifications];
+      saveNotifications(updatedNotifications);
+      return updatedNotifications;
+    });
+  };
+  
+  const toggleNotification = (id: string) => {
+    const updatedNotifications = notifications.map(notification => 
+      notification.id === id 
+        ? { ...notification, read: !notification.read } 
+        : notification
+    );
+    setNotifications(updatedNotifications);
+    saveNotifications(updatedNotifications);
+  };
+  
+  const markAsRead = (id: string) => {
+    const updatedNotifications = notifications.map(notification => 
+      notification.id === id || notification.id === id.toString()
+        ? { ...notification, read: true } 
+        : notification
+    );
+    setNotifications(updatedNotifications);
+    saveNotifications(updatedNotifications);
+  };
+  
+  const deleteNotification = (id: string) => {
+    const updatedNotifications = notifications.filter(notification => notification.id !== id);
+    setNotifications(updatedNotifications);
+    saveNotifications(updatedNotifications);
+  };
+  
+  const clearAllNotifications = () => {
+    Alert.alert(
+      "Thông báo",
+      "Bạn có chắc chắn muốn xóa tất cả thông báo?",
+      [
+        {
+          text: "Cancel",
+          style: "cancel"
+        },
+        { 
+          text: "Clear All", 
+          onPress: () => {
+            setNotifications([]);
+            saveNotifications([]);
+          },
+          style: "destructive"
+        }
+      ]
+    );
+  };
 
   const insets = useSafeAreaInsets();
 
   return (
-    <>
     <SafeAreaView style={{...styles.container, paddingBottom: insets.bottom + 70, paddingTop: insets.top}}>
       <GestureHandlerRootView style={{flex: 1}}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>Nhắc nhở</Text>
-        </View>
-        
-        <View style={styles.reminderList}>
-          {reminders.length > 0 ? (
-            reminders.map((item) => (
-              <SwipeableItem 
-                key={item.id}
-                item={item} 
-                onDelete={deleteReminder}
-                onToggle={toggleReminder}
-              />
-            ))
-          ) : (
-            <View style={{alignItems: 'center' , flex: 1, paddingTop:120}} >
-               <Ionicons name="leaf-outline" size={100} color={colors.primary} />
-               <Text style={styles.emptyText}>Không có lời nhắc nào</Text>
-            </View>
+          <Text style={styles.headerTitle}>Thông báo</Text>
+          {notifications.length > 0 && (
+            <TouchableOpacity 
+              style={styles.clearButton} 
+              onPress={clearAllNotifications}
+            >
+              <Text style={styles.clearButtonText}>Xóa tất cả</Text>
+            </TouchableOpacity>
           )}
         </View>
         
+        <ScrollView style={styles.notificationList}
+          contentContainerStyle={{paddingBottom: 70}}>
+          {notifications.length > 0 ? (
+            notifications.map((item) => (
+              <SwipeableItem 
+                key={item.id}
+                item={item} 
+                onDelete={deleteNotification}
+                onToggle={toggleNotification}
+              />
+            ))
+          ) : (
+            <View style={{alignItems: 'center', flex: 1, paddingTop:120}} >
+               <Ionicons name="notifications-outline" size={100} color={colors.primary} />
+               <Text style={styles.emptyText}>Không có thông báo nào</Text>
+            </View>
+          )}
+        </ScrollView>
+        
+        {/* For testing purposes - triggers a local notification */}
         <TouchableOpacity
           style={styles.addButton}
-          onPress={navigateToCreateReminder}
+          onPress={async () => {
+            await Notifications.scheduleNotificationAsync({
+              content: {
+                title: "Thông báo thử nghiệm",
+                body: "Đây là một thông báo thử nghiệm để kiểm tra tính năng",
+              },
+              trigger: null, // show immediately
+            });
+          }}
         >
-          <AntDesign name="plus" size={34} color="white" />
+          <AntDesign name="bells" size={34} color="white" />
         </TouchableOpacity>
       </GestureHandlerRootView>  
-      <CreateReminder visible={isVisible} onClose={handleCreate} />
     </SafeAreaView>
-    </>
   );
 };
 
@@ -237,23 +361,33 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
     borderBottomColor: '#e0e0e0',
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: 'bold',
+    left:5
   },
-  reminderList: {
+  clearButton: {
+    padding: 8,
+  },
+  clearButtonText: {
+    color: colors.primary,
+    fontWeight: '600',
+    fontSize: 18,
+  },
+  notificationList: {
     flex: 1,
     paddingVertical: 8,
-    paddingTop: 16,  // Increased padding at top
+    paddingTop: 16,
   },
   itemContainer: {
     position: 'relative',
-    marginVertical: 10,  // Increased space between reminders
+    marginVertical: 10,
     marginHorizontal: 16,
   },
   deleteButtonContainer: {
@@ -263,31 +397,40 @@ const styles = StyleSheet.create({
     right: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    paddingLeft: 10,  // Added padding inside delete button
+    paddingLeft: 10,
   },
-  reminderItem: {
+  notificationItem: {
     backgroundColor: 'white',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,  // Increased padding inside reminders
+    padding: 20,
     borderRadius: 20,
     elevation: 3,
   },
-  reminderInfo: {
+  unreadNotification: {
+    borderLeftWidth: 5,
+    borderLeftColor: colors.orange100,
+  },
+  notificationInfo: {
     flex: 1,
-    paddingRight: 12,  // Added padding between text and switch
+    paddingRight: 12,
   },
-  reminderTitle: {
-    fontSize: 18,  // Increased font size
+  notificationTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 8,  // More space after title
+    marginBottom: 8,
   },
-  reminderDetail: {
-    fontSize: 16,  // Increased font size
+  notificationBody: {
+    fontSize: 16,
     color: '#555',
-    marginBottom: 4,  // More space between details
-    marginLeft: 14,  // Added margin to the left
+    marginBottom: 8,
+    marginLeft: 14,
+  },
+  notificationDate: {
+    fontSize: 12,
+    color: '#888',
+    marginLeft: 14,
   },
   deleteButton: {
     backgroundColor: 'rgb(206, 46, 46)',
@@ -300,15 +443,15 @@ const styles = StyleSheet.create({
   deleteButtonText: {
     color: 'white',
     fontWeight: 'bold',
-    fontSize: 16,  // Increased font size
+    fontSize: 16,
   },
   addButton: {
     position: 'absolute',
-    bottom: 30,  // Moved button higher from bottom
-    right: 30,   // Moved button further from right edge
+    bottom: 30,
+    right: 30,
     backgroundColor: colors.primary,
-    width: 70,   // Larger button
-    height: 70,  // Larger button
+    width: 70,
+    height: 70,
     borderRadius: 30,
     justifyContent: 'center',
     alignItems: 'center',
@@ -319,7 +462,6 @@ const styles = StyleSheet.create({
     fontSize: 20,
     color: '#8E8E93',
   },
-
 });
 
-export default ReminderListScreen;
+export default NotificationScreen;

@@ -1,7 +1,6 @@
   import React, { createContext, useState, useEffect, useContext } from 'react';
   import axios from 'axios';
   import * as SecureStore from 'expo-secure-store';
-import { API_BASE_URL } from '@/config';
 
   interface AuthProps {
     authState?: {token: string| null; authenticated: boolean | null};
@@ -14,7 +13,6 @@ import { API_BASE_URL } from '@/config';
   }
 
   const TOKEN_KEY = 'my-jwt';
-  export const API_URL = API_BASE_URL;
   const AuthContext = createContext<AuthProps | undefined>(undefined);
 
   
@@ -36,7 +34,7 @@ import { API_BASE_URL } from '@/config';
 
     const register = async (email: string, password: string) => {
       try {
-        return await axios.post(`${API_URL}/register`, {email, password});
+        return true;
       } catch (error) {
         console.log(error);
         return {error:true, msg: (error as any).response.data.message};

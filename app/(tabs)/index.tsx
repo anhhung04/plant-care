@@ -14,6 +14,8 @@ import { getRandomImage, URL } from '@/src/utils/farmpic';
 import { useGarden } from '@/src/context/GreenHouse';
 import GardenSetting from './gsetting';
 
+
+
 // Dữ liệu mẫu cho các thiết bị
 type DeviceIcon = "thermometer-outline" | "rainy-outline" | "earth-outline" | "sunny-outline" | "pie-chart-outline";
 type EquipIcon = "zap" | "wind" | "droplet";
@@ -42,6 +44,9 @@ const reminders: ReminderItem[] = ([
   // { id: '1', title: 'Họp nhóm lúc 14h00', dueDate: 'Hôm nay, 14:00', completed: false },
   // { id: '2', title: 'Kiểm tra phân bón', dueDate: 'Hôm nay, 17:00', completed: false },
 ]);
+// Maximum age for sensor data in milliseconds (e.g., 5 minutes)
+const MAX_DATA_AGE = 20000;
+
 const HomeScreen: React.FC = () => {
   const [noti, setNoti] = useState(false);
   const [deviceStates, setDeviceStates] = useState(devices);
@@ -184,7 +189,9 @@ const HomeScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{...styles.container, paddingTop: insets.top + 6, paddingBottom:70+ insets.bottom}}>  
+    <>
+    <ScrollView style={{...styles.container}}
+      contentContainerStyle={{ paddingTop: insets.top, paddingBottom: insets.bottom + 100 }}>
       {/* Header */}
       
       <View style={{...styles.header, paddingBottom: 20}}> 
@@ -356,13 +363,14 @@ const HomeScreen: React.FC = () => {
         </Card>
       </TouchableOpacity>
 
-      <BottomSheetModal
-        visible={modalVisible}
-        onClose={() => {setModalVisible(false); showTabBar()}}
-        notification={notifications}
-        reminder={reminders}
-      />
-    </View>
+    </ScrollView>
+    <BottomSheetModal
+      visible={modalVisible}
+      onClose={() => {setModalVisible(false); showTabBar()}}
+      notification={notifications}
+      reminder={reminders}
+    />
+    </>
   );
 };
 
