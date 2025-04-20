@@ -1,9 +1,12 @@
 package com.plantcare.mobile.notification;
 
+import com.google.cloud.Timestamp;
 import com.plantcare.mobile.dtoGlobal.response.ApiResponse;
 import com.plantcare.mobile.notification.dto.request.FCMregister;
 import com.plantcare.mobile.notification.dto.request.NotificationCreationRequest;
 import com.plantcare.mobile.notification.dto.response.NotificationResponse;
+import com.plantcare.mobile.notification.entity.FCMToken;
+import com.plantcare.mobile.notification.repository.FcmTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.web.bind.annotation.*;
@@ -11,67 +14,57 @@ import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor
 @Slf4j
 public class NotificationController {
-    private final FireBaseMessagingService notificationService;
-    private final FcmService fcmService;
-
-
+    private final ExpoPushService expoPushService;
+    private final FcmTokenRepository repo;
     @PostMapping
     public ApiResponse<NotificationResponse> sendNotification(@RequestBody NotificationCreationRequest request) {
         log.info("Received notification request: {}", request);
-        NotificationResponse response = notificationService.sendNotification(request);
-        if (response != null) {
-            return ApiResponse.<NotificationResponse>builder()
-                    .status(HttpStatusCode.valueOf(200))
-                    .message("Notification sent successfully")
-                    .data(response)
-                    .build();
-        } else {
-            return ApiResponse.<NotificationResponse>builder()
-                    .status(HttpStatusCode.valueOf(500))
-                    .message("Failed to send notification")
-                    .data(null)
-                    .build();
-        }
+
+        // Gọi service gửi notification
+        expoPushService.sendNotifications(request.getTitle(), request.getContent());
+
+        // Tạo response để trả về client
+        NotificationResponse response = NotificationResponse.builder()
+                .id(UUID.randomUUID().toString())
+                .title(request.getTitle())
+                .content(request.getContent())
+                .timestamp(Timestamp.now())
+                .read(false)
+                .build();
+
+        return ApiResponse.<NotificationResponse>builder()
+                .status(HttpStatusCode.valueOf(200))
+                .message("Notification sent successfully")
+                .data(response)
+                .build();
     }
 
-    @GetMapping("/{id}")
-    public ApiResponse<NotificationResponse> getNotificationById(@PathVariable String id) {
-        log.info("Received request to get notification by ID: {}", id);
-        NotificationResponse response = notificationService.getNotificationById(id);
-        if (response != null) {
-            return ApiResponse.<NotificationResponse>builder()
-                    .status(HttpStatusCode.valueOf(200))
-                    .message("Notification retrieved successfully")
-                    .data(response)
-                    .build();
-        } else {
-            return ApiResponse.<NotificationResponse>builder()
-                    .status(HttpStatusCode.valueOf(404))
-                    .message("Notification not found")
-                    .data(null)
-                    .build();
-        }
-    }
-
-    @PostMapping("/register")
-    public ApiResponse<String> registerToken(@RequestBody FCMregister fcMregister){
-        String response= fcmService.saveToken(fcMregister);
-        if(response !=null){
+    @PostMapping("/register-token")
+    public ApiResponse<String> registerToken(@RequestBody FCMregister req) {
+        // upsert token
+        log.info("Received token registration request: {}", req);
+        FCMToken existingToken = repo.findByToken(req.getToken());
+        if (existingToken != null) {
+            log.warn("Token already exists: {}", req.getToken());
             return ApiResponse.<String>builder()
-                    .status(HttpStatusCode.valueOf(200))
-                    .message("Notification register succesfully")
-                    .data(response)
+                    .status(HttpStatusCode.valueOf(400))
+                    .message("Token already exists")
+                    .data("Token already exists")
                     .build();
         }
+
+
         return ApiResponse.<String>builder()
                 .status(HttpStatusCode.valueOf(200))
-                .message("Notification register failed")
-                .data(null)
+                .message("Token registered successfully")
+                .data("Token registered successfully")
                 .build();
     }
 }

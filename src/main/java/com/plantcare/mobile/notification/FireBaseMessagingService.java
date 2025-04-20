@@ -58,6 +58,7 @@ public class FireBaseMessagingService {
                             .putData("timestamp", notification.getTimestamp().toString())
                             .putData("id", notification.getId())
                             .putData("read", String.valueOf(notification.isRead()))
+                            .setTopic("plantcare")
                             .setToken(token.getToken())
                             .build();
                     fireBaseConfig.firebaseMessaging().send(messageWithToken);

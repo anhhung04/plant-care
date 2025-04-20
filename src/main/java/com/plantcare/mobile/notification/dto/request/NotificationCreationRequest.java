@@ -10,5 +10,4 @@ import java.time.LocalDateTime;
 public class NotificationCreationRequest {
     private String title;
     private String content;
-
 }
