@@ -1,1 +1,1 @@
-export const API_URL = "https://nhunng.ngrok.app/api";
+export const API_URL = "http://104.214.177.9:8000/api/v1/greenhouses";

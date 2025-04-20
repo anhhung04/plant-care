@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SettingsIcon from "@/assets/icons/setting-fill-22.svg";
 import {
   View,
@@ -10,7 +10,7 @@ import {
   SafeAreaView,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useFocusEffect, useRouter } from "expo-router";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiCall } from "@/src/utils/apiCall";
 import settingsMockData from "@/src/data/settings.mock.json";
@@ -18,13 +18,29 @@ import { useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SettingStackParamList } from "../_layout";
 import { colors } from "@/assets/fonts/colors";
+import { useGarden } from "@/src/context/GreenHouse";
+import { API_GREENHOUSE_URL } from "@/config";
+import { Field } from "@/src/context/GreenHouse";
 
 interface DeviceType {
-  id: number;
   name: string;
   mode: string;
   status: boolean;
   intensity: number;
+}
+
+interface ConfigType {
+  mode: string;
+  turn_off_after: number;
+  turn_on_at: string;
+  repeat: string;
+  dates: string[];
+}
+
+interface DeviceList {
+  config_led: ConfigType;
+  config_fan: ConfigType;
+  config_pump: ConfigType;
 }
 
 const devicesImage = {
@@ -39,8 +55,13 @@ const deviceName = {
   pump: "Bơm Nước",
 };
 
+const modeName = {
+  manual: "Thủ công",
+  automatic: "Tự động",
+  scheduled: "Hẹn giờ",
+};
+
 const CardDevice: React.FC<DeviceType> = ({
-  id,
   name,
   mode,
   status,
@@ -50,6 +71,11 @@ const CardDevice: React.FC<DeviceType> = ({
   const [updateStatus, setUpdateStatus] = useState(status);
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingStackParamList>>();
+  const { selectedGreenhouse, selectedFieldIndex } = useGarden();
+
+  let toggledStatus = status ? 0 : 100;
+
+  console.log("🔍 deviceStatus", status);
 
   const toggleSwitch = () => {
     setUpdateStatus((prev) => !prev);
@@ -59,11 +85,8 @@ const CardDevice: React.FC<DeviceType> = ({
   const saveSettingsMutation = useMutation({
     mutationFn: async () => {
       return apiCall({
-        endpoint: `/settings/${name}/status`,
-        method: "PUT",
-        body: {
-          status: !updateStatus,
-        },
+        endpoint: `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}/control?device=${name}&value=${toggledStatus}`,
+        method: "POST",
       });
     },
     onError: (error) => {
@@ -96,7 +119,9 @@ const CardDevice: React.FC<DeviceType> = ({
         </View>
       </View>
       <View style={styles.ControlSection}>
-        <Text style={styles.mode}>{mode}</Text>
+        <Text style={styles.mode}>
+          {modeName[mode as keyof typeof modeName]}
+        </Text>
         <TouchableOpacity
           style={styles.iconButton}
           onPress={() =>
@@ -112,22 +137,48 @@ const CardDevice: React.FC<DeviceType> = ({
 
 export default function SettingTab() {
   const insets = useSafeAreaInsets();
-  const [deviceList, setDeviceList] = useState<DeviceType[]>(settingsMockData);
+  const [deviceList, setDeviceList] = useState<DeviceList | null>(null);
+  const [deviceStatus, setDeviceStatus] = useState<Field | null>(null);
+  const { selectedGreenhouse, selectedField, selectedFieldIndex } = useGarden();
 
-  const {
-    data: settings,
-    isSuccess,
-    isError,
-  } = useQuery<any>({
-    queryKey: ["settings"],
-    queryFn: () => apiCall({ endpoint: `/settings` }),
+  console.log("greenhouse", selectedGreenhouse?.greenhouse_id);
+  console.log("field", selectedFieldIndex);
+  console.log(
+    "🔍",
+    `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}`
+  );
+
+  const { data, isSuccess, isError, refetch } = useQuery<any>({
+    queryKey: [
+      "settings",
+      selectedGreenhouse?.greenhouse_id,
+      selectedFieldIndex,
+    ],
+    queryFn: () =>
+      apiCall({
+        endpoint: `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}`,
+      }),
+    enabled:
+      !!selectedGreenhouse?.greenhouse_id &&
+      selectedFieldIndex !== null &&
+      selectedFieldIndex !== undefined,
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
   });
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [refetch])
+  );
+
   useEffect(() => {
-    if (isSuccess) {
-      setDeviceList(settings);
+    if (data) {
+      console.log("🔍 data", data);
+      setDeviceList(data.metadata);
+      setDeviceStatus(data.sensors);
     }
-  }, [isSuccess]);
+  }, [data]);
 
   return (
     <SafeAreaView
@@ -137,9 +188,24 @@ export default function SettingTab() {
         paddingBottom: insets.bottom,
       }}
     >
-      {deviceList.map((device: DeviceType, index: number) => (
-        <CardDevice key={index} {...device} />
-      ))}
+      <CardDevice
+        name="led"
+        mode={deviceList?.config_led?.mode ?? ""}
+        status={(Number(deviceStatus?.led_status?.[0]?.value) ?? 0) > 0}
+        intensity={deviceStatus?.led_status?.[0]?.value ?? 0}
+      />
+      <CardDevice
+        name="fan"
+        mode={deviceList?.config_fan?.mode ?? ""}
+        status={(Number(deviceStatus?.fan_status?.[0]?.value) ?? 0) > 0}
+        intensity={selectedField?.fan_status?.[0]?.value ?? 0}
+      />
+      <CardDevice
+        name="pump"
+        mode={deviceList?.config_pump?.mode ?? ""}
+        status={(Number(deviceStatus?.pump_status?.[0]?.value) ?? 0) > 0}
+        intensity={selectedField?.pump_status?.[0]?.value ?? 0}
+      />
     </SafeAreaView>
   );
 }

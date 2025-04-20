@@ -5,7 +5,7 @@ import { Image } from "react-native-svg";
 
 export const socketEvents = new EventEmitter();
 
-const userId = "c670e06e-afa8-4d4f-8005-b7bea9b38054";// Replace with your actual WebSocket URL
+const userId = "c670e06e-afa8-4d4f-8005-b7bea9b38054"; // Replace with your actual WebSocket URL
 
 let stompClient: Client;
 
@@ -23,7 +23,7 @@ export const connectToSocket = (greenhouseId: string) => {
       return new WebSocket(SOCKET_URL);
     },
     debug: (str) => {
-      console.log("DEBUG: ",str);
+      console.log("DEBUG: ", str);
     },
     onConnect: () => {
       console.log("✅ WebSocket connection established");
@@ -31,7 +31,7 @@ export const connectToSocket = (greenhouseId: string) => {
       // Subscribe to the greenhouse queue
       const subscription = stompClient.subscribe(
         `/queue/greenhouse/${userId}`,
-        (message ) => {
+        (message) => {
           try {
             const data = JSON.parse(message.body);
             console.log("Received message:", data);
@@ -55,7 +55,7 @@ export const connectToSocket = (greenhouseId: string) => {
         greenhouseIds: [greenhouseId],
       };
 
-      var checking=stompClient.publish({
+      var checking = stompClient.publish({
         destination: "/app/subscribe",
         headers: {
           Authorization: `Bearer ${userId}`,
@@ -84,7 +84,7 @@ export const connectToSocket = (greenhouseId: string) => {
         },
         body: JSON.stringify({ userId, greenhouseIds: [greenhouseId] }),
       });
-    }
+    },
   });
 
   stompClient.activate();
@@ -112,4 +112,4 @@ export const getSocketClient = () => {
 };
 export const getSocketEvents = () => {
   return socketEvents;
-}
+};

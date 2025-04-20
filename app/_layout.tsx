@@ -17,20 +17,31 @@ const RootLayoutNav = () => {
   // Handle the 2-second delay
   useEffect(() => {
     if (!loading) {
-      // If auth loading is done, wait 2 seconds before clearing the delayed loading state
+      // Reduced delay to 1 second
       const timer = setTimeout(() => {
         setIsDelayedLoading(false);
-      }, 5000); // 2000ms = 2 seconds
+      }, 1000);
 
-      // Cleanup timer if component unmounts or authLoading changes
       return () => clearTimeout(timer);
     }
   }, [loading]);
 
-  // Show loading screen if either auth is loading or delay hasn't completed
+  // Add error boundary
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (loading) {
+        console.warn("Loading is taking too long - might be stuck");
+        setIsDelayedLoading(false);
+      }
+    }, 10000); // Force timeout after 10 seconds
+
+    return () => clearTimeout(timeoutId);
+  }, []);
+
   if (loading || isDelayedLoading) {
     return <LoadingScreen message='Đang tải ứng dụng'/>; // Your loading component
   }
+
   return (
     <React.Fragment>
       <Stack screenOptions={{ headerShown: false }}>
@@ -46,17 +57,17 @@ const RootLayoutNav = () => {
 };
 
 export default function RootLayout() {
-      StatusBar.setTranslucent(true);
-      StatusBar.setBackgroundColor('transparent');
-      return (
-        <AuthProvider>
-          <QueryClientProvider client={queryClient}>
-            <GardenProvider>
-              <RootLayoutNav />
-            </GardenProvider>
-          </QueryClientProvider>
-        </AuthProvider>
-      );
+  StatusBar.setTranslucent(true);
+  StatusBar.setBackgroundColor("transparent");
+  return (
+    <AuthProvider>
+      <QueryClientProvider client={queryClient}>
+        <GardenProvider>
+          <RootLayoutNav />
+        </GardenProvider>
+      </QueryClientProvider>
+    </AuthProvider>
+  );
 }
 // useEffect(() => {
 //   // Ngăn splash screen ẩn cho đến khi điều hướng hoàn tất
@@ -71,3 +82,8 @@ export default function RootLayout() {
 //   SplashScreen.hideAsync();
 //   // Ẩn splash screen sau khi điều hướng
 // }, [user, isFirstLaunch, router]);
+
+export const unstable_settings = {
+  initialRouteName: "(tabs)",
+  navigationPersistence: false,
+};

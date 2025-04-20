@@ -11,24 +11,31 @@ import { colors } from "@/assets/fonts/colors";
 import { fonts } from "@/assets/fonts/font";
 
 import { useNavigation } from "@react-navigation/native";
-import { Feather } from '@expo/vector-icons';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import LottieView from 'lottie-react-native';
-import {router} from 'expo-router';
+import { Feather } from "@expo/vector-icons";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import LottieView from "lottie-react-native";
+import { router } from "expo-router";
 
 export const LoadingScreen = ({ message }: { message: string }) => {
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={{
-      ...styles.container,
-      paddingTop: insets.top + 40,
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}>
-      <LottieView source={require('@/assets/animation/loading.json')}
+    <View
+      style={{
+        ...styles.container,
+        paddingTop: insets.top + 40,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <LottieView
+        source={require("@/assets/animation/loading.json")}
         style={styles.animationContainer}
-                    autoPlay loop />
+        autoPlay
+        loop
+        speed={1.5}
+        renderMode="HARDWARE"
+      />
 
       <View style={styles.formContainer}>
         <Text style={styles.cautionText}>Vui lòng đợi trong giây lát!</Text>
@@ -36,7 +43,7 @@ export const LoadingScreen = ({ message }: { message: string }) => {
       </View>
     </View>
   );
-}
+};
 
 const WaitScreen = () => {
   const navigation = useNavigation();
@@ -45,29 +52,41 @@ const WaitScreen = () => {
   const insets = useSafeAreaInsets();
   const handleGoBack = () => {
     //navigation.navigate("(auth)/signin");
-    router.replace('/auth/signin');
+    router.replace("/auth/signin");
   };
 
   return (
-    <View style={{
-      ...styles.container,
-      paddingTop: insets.top,
-
-    }}>
+    <View
+      style={{
+        ...styles.container,
+        paddingTop: insets.top,
+      }}
+    >
       <View style={styles.textContainer}>
         <Text style={styles.headingText}>Chúc mừng,</Text>
         <Text style={styles.headingText}>Bạn đã đăng ký thành công</Text>
       </View>
-      <View style={{ 
+      <View
+        style={{
           justifyContent: "center",
-          alignItems: "center",}}>
-        <LottieView source={require('@/assets/animation/cat.json')}
+          alignItems: "center",
+        }}
+      >
+        <LottieView
+          source={require("@/assets/animation/cat.json")}
           style={styles.animationContainer}
-                      autoPlay loop />
+          autoPlay
+          loop
+        />
       </View>
       <View style={styles.formContainer}>
-        <Text style={styles.cautionText}>Vui lòng đợi hoặc liên hệ với admin để được phê duyệt!</Text>
-        <TouchableOpacity style={styles.loginButtonWrapper} onPress={handleGoBack}>
+        <Text style={styles.cautionText}>
+          Vui lòng đợi hoặc liên hệ với admin để được phê duyệt!
+        </Text>
+        <TouchableOpacity
+          style={styles.loginButtonWrapper}
+          onPress={handleGoBack}
+        >
           <Text style={styles.loginText}>Về trang đăng nhập</Text>
         </TouchableOpacity>
       </View>
@@ -97,14 +116,14 @@ const styles = StyleSheet.create({
   headingText: {
     fontSize: 42,
     color: colors.primary,
-    fontFamily: 'Raleway-Bold',
+    fontFamily: "Raleway-Bold",
   },
   cautionText: {
-    flexDirection: 'row',
-    textAlign: 'center',
-    fontSize: 13,   
-    color: '#a9a9a9',  
-    fontFamily: 'Raleway-Bold',
+    flexDirection: "row",
+    textAlign: "center",
+    fontSize: 13,
+    color: "#a9a9a9",
+    fontFamily: "Raleway-Bold",
   },
   formContainer: {
     marginTop: 20,
