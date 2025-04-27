@@ -37,7 +37,7 @@ const AutomaticSetting: React.FC<{
     },
     onSuccess: () => {
       setNotifySave(false);
-      router.back();
+      router.push("/setting");
     },
     onError: (error) => {
       console.error("Error saving settings:", error);
@@ -59,7 +59,7 @@ const AutomaticSetting: React.FC<{
     onSuccess: () => {
       setNotifySave(false);
       console.log("🔍 saveSettingsMutation.mutate");
-      router.back();
+      router.push("/setting");
     },
     onError: (error) => {
       console.error("Error saving settings:", error);

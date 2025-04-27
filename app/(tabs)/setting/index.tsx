@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import SettingsIcon from "@/assets/icons/setting-fill-22.svg";
 import {
   View,
@@ -19,8 +19,8 @@ import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { SettingStackParamList } from "../_layout";
 import { colors } from "@/assets/fonts/colors";
 import { useGarden } from "@/src/context/GreenHouse";
-import { API_GREENHOUSE_URL } from "@/config";
 import { Field } from "@/src/context/GreenHouse";
+import { TabBarContext } from "../_layout";
 
 interface DeviceType {
   name: string;
@@ -72,10 +72,14 @@ const CardDevice: React.FC<DeviceType> = ({
   const navigation =
     useNavigation<NativeStackNavigationProp<SettingStackParamList>>();
   const { selectedGreenhouse, selectedFieldIndex } = useGarden();
+  const { hideTabBar } = useContext(TabBarContext);
 
-  let toggledStatus = status ? 0 : 100;
+  let toggledStatus = updateStatus ? 0 : 100;
 
-  console.log("🔍 deviceStatus", status);
+  // Synchronize updateStatus with the status prop
+  useEffect(() => {
+    setUpdateStatus(status);
+  }, [status]);
 
   const toggleSwitch = () => {
     setUpdateStatus((prev) => !prev);
@@ -90,7 +94,7 @@ const CardDevice: React.FC<DeviceType> = ({
       });
     },
     onError: (error) => {
-      setUpdateStatus((prev) => !prev);
+      setUpdateStatus((prev) => !prev); // Revert the state on error
       console.error("Error saving settings:", error);
     },
   });
@@ -124,9 +128,10 @@ const CardDevice: React.FC<DeviceType> = ({
         </Text>
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() =>
-            navigation.navigate("ConfigScreen", { device_name: name })
-          }
+          onPress={() => {
+            navigation.navigate("ConfigScreen", { device_name: name });
+            hideTabBar();
+          }}
         >
           <SettingsIcon width={22} height={22} />
         </TouchableOpacity>
@@ -140,13 +145,6 @@ export default function SettingTab() {
   const [deviceList, setDeviceList] = useState<DeviceList | null>(null);
   const [deviceStatus, setDeviceStatus] = useState<Field | null>(null);
   const { selectedGreenhouse, selectedField, selectedFieldIndex } = useGarden();
-
-  console.log("greenhouse", selectedGreenhouse?.greenhouse_id);
-  console.log("field", selectedFieldIndex);
-  console.log(
-    "🔍",
-    `/${selectedGreenhouse?.greenhouse_id}/fields/${selectedFieldIndex}`
-  );
 
   const { data, isSuccess, isError, refetch } = useQuery<any>({
     queryKey: [
@@ -189,16 +187,16 @@ export default function SettingTab() {
       }}
     >
       <CardDevice
-        name="led"
-        mode={deviceList?.config_led?.mode ?? ""}
-        status={(Number(deviceStatus?.led_status?.[0]?.value) ?? 0) > 0}
-        intensity={deviceStatus?.led_status?.[0]?.value ?? 0}
-      />
-      <CardDevice
         name="fan"
         mode={deviceList?.config_fan?.mode ?? ""}
         status={(Number(deviceStatus?.fan_status?.[0]?.value) ?? 0) > 0}
         intensity={selectedField?.fan_status?.[0]?.value ?? 0}
+      />
+      <CardDevice
+        name="led"
+        mode={deviceList?.config_led?.mode ?? ""}
+        status={(Number(deviceStatus?.led_status?.[0]?.value) ?? 0) > 0}
+        intensity={deviceStatus?.led_status?.[0]?.value ?? 0}
       />
       <CardDevice
         name="pump"

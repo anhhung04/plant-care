@@ -143,7 +143,6 @@ const ManualSetting: React.FC<{
     },
     onSuccess: () => {
       setNotifySave(false);
-      router.back();
     },
     onError: (error) => {
       console.error("Error saving settings:", error);
@@ -165,7 +164,6 @@ const ManualSetting: React.FC<{
     },
     onSuccess: () => {
       setNotifySave(false);
-      router.back();
     },
     onError: (error) => {
       console.error("Error saving settings:", error);
@@ -174,8 +172,17 @@ const ManualSetting: React.FC<{
 
   useEffect(() => {
     if (notifySave) {
-      saveSettingsMutationStatus.mutate();
-      saveSettingsMutationConfig.mutate();
+      Promise.all([
+        saveSettingsMutationStatus.mutateAsync(),
+        saveSettingsMutationConfig.mutateAsync(),
+      ])
+        .then(() => {
+          setNotifySave(false);
+          router.back(); // Navigate back only once after both succeed
+        })
+        .catch((error) => {
+          console.error("Error saving settings:", error);
+        });
     }
   }, [notifySave]);
 

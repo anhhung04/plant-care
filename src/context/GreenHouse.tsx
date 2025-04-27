@@ -77,6 +77,7 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
       });
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched greenhouses:', data.data);
         setGreenhouses(data.data);
       }else {
         console.error('Failed request:', response);
@@ -146,7 +147,6 @@ export const GardenProvider = ({ children }: { children: ReactNode }) => {
             gh.greenhouse_id === greenhouseId ? responseData.data : gh
           )
         );
-  
         if (selectedGreenhouse?.greenhouse_id === greenhouseId) {
           setSelectedGreenhouse(responseData.data);
   

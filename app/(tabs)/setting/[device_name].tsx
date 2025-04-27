@@ -241,7 +241,7 @@ export default function ConfigScreen() {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.saveButton}
-          onPress={() => setNotifySave(true)}
+          onPress={() => {setNotifySave(true);showTabBar()}}
         >
           <Text style={{ color: "#fff", fontWeight: "bold" }}>Lưu</Text>
         </TouchableOpacity>

@@ -20,105 +20,10 @@ import { TabBarContext } from "./_layout";
 import { getRandomImage, URL } from "@/src/utils/farmpic";
 import { useGarden } from "@/src/context/GreenHouse";
 import GardenSetting from "./gsetting";
-import { stat } from "fs";
 
-
-
-// Dữ liệu mẫu cho các thiết bị
-type DeviceIcon =
-  | "thermometer-outline"
-  | "rainy-outline"
-  | "earth-outline"
-  | "sunny-outline"
-  | "pie-chart-outline";
-type EquipIcon = "zap" | "wind" | "droplet";
-
-const devices: {
-  id: number;
-  icon: DeviceIcon;
-  name: string;
-  status: boolean;
-  value: string;
-}[] = [
-  {
-    id: 1,
-    icon: "thermometer-outline",
-    name: "Nhiệt độ",
-    status: false,
-    value: "37°C",
-  },
-  {
-    id: 2,
-    icon: "rainy-outline",
-    name: "Độ ẩm không khí",
-    status: false,
-    value: "50 %",
-  },
-  {
-    id: 3,
-    icon: "earth-outline",
-    name: "Độ ẩm đất",
-    status: false,
-    value: "50 %",
-  },
-  {
-    id: 4,
-    icon: "sunny-outline",
-    name: "Cường độ ánh sáng",
-    status: false,
-    value: "300 lux",
-  },
-];
-
-const equipments: {
-  id: number;
-  icon: EquipIcon;
-  name: string;
-  status: boolean;
-}[] = [
-  { id: 1, icon: "zap", name: "Đèn LED", status: false },
-  { id: 2, icon: "wind", name: "Quạt", status: false },
-  { id: 3, icon: "droplet", name: "Bơm nước", status: true },
-];
-
-const notifications: NotificationItem[] = [
-  {
-    id: "1",
-    title: "Quạt được bật thủ công",
-    message: "Cường độ 50%",
-    time: "15:30, 06/01/2025",
-  },
-  {
-    id: "2",
-    title: "Quạt được tắt tự động",
-    message: "Cường độ 0%",
-    time: "12:30, 06/01/2025",
-  },
-  {
-    id: "3",
-    title: "Tưới nước được bật tự động",
-    message: "Cường độ 100%",
-    time: "10:30, 06/01/2025",
-  },
-  {
-    id: "4",
-    title: "Tưới nước được tắt tự động",
-    message: "Cường độ 0%",
-    time: "08:30, 06/01/2025",
-  },
-];
-
-const reminders: ReminderItem[] = [
-  // { id: '1', title: 'Họp nhóm lúc 14h00', dueDate: 'Hôm nay, 14:00', completed: false },
-  // { id: '2', title: 'Kiểm tra phân bón', dueDate: 'Hôm nay, 17:00', completed: false },
-];
-// Maximum age for sensor data in milliseconds (e.g., 5 minutes)
-const MAX_DATA_AGE = 20000;
 
 const HomeScreen: React.FC = () => {
   const [noti, setNoti] = useState(false);
-  const [deviceStates, setDeviceStates] = useState(devices);
-  const [equipmentStates, setEquipmentStates] = useState(equipments);
   const [modalVisible, setModalVisible] = useState(false);
 
   const { hideTabBar, showTabBar } = useContext(TabBarContext);
@@ -430,8 +335,6 @@ const HomeScreen: React.FC = () => {
     <BottomSheetModal
       visible={modalVisible}
       onClose={() => {setModalVisible(false); showTabBar()}}
-      notification={notifications}
-      reminder={reminders}
     />
     </>
   );

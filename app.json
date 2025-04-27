@@ -16,7 +16,12 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "googleServicesFile": "./google-services.json"
+      "googleServicesFile": "./google-services.json",
+      "permissions": ["INTERNET"],
+      "networkSecurityConfig": {
+        "allowCleartextTraffic": true
+      },
+      "usesCleartextTraffic": true
     },
     "web": {
       "bundler": "metro",
@@ -44,7 +49,13 @@
           "sounds": [
             "./assets/aria_math.mp3"
           ]
-        }
+        },
+      ["expo-build-properties", 
+        { 
+          "android": 
+            { "usesCleartextTraffic": true } 
+        } 
+      ]
     ],
     "experiments": {
       "typedRoutes": true

@@ -3,8 +3,6 @@ import { Greenhouse , Field } from "../context/GreenHouse";
 export interface BottomSheetModalProps {
     visible: boolean;
     onClose: () => void;
-    notification: NotificationItem[];
-    reminder: ReminderItem[];
   }
 
   export interface ChangeAreaModalProps {
